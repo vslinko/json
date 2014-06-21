@@ -53,7 +53,6 @@ struct json_value {
     enum json_value_type type;
 
     union {
-        char *null_value;
         char *boolean_value;
         char *number_value;
         char *string_value;

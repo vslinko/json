@@ -151,8 +151,6 @@ static int json_get_next_token() {
         case JSON_TOKEN_NULL:
             if (source_length - current_position >= 4 && memcmp(source + current_position, "null", 4) == 0) {
                 current_position += 4;
-                json_malloc(token_value, sizeof(char) * 5);
-                strcpy(token_value, "null");
                 return JSON_TOKEN_NULL;
             }
             break;
@@ -252,6 +250,8 @@ static struct json_object_member *json_parse_object_member() {
     return member;
 }
 
+#define JSON_PARSE_OBJECT_CHUNK_SIZE 8
+
 static struct json_object *json_parse_object() {
     struct json_object *object;
 
@@ -269,9 +269,9 @@ static struct json_object *json_parse_object() {
         }
 
         if (object->size == 0) {
-            json_malloc(object->members, sizeof(struct json_object_member *));
-        } else {
-            json_realloc(object->members, sizeof(struct json_object_member *) * (object->size + 1));
+            json_malloc(object->members, sizeof(struct json_object_member *) * JSON_PARSE_OBJECT_CHUNK_SIZE);
+        } else if (object->size % JSON_PARSE_OBJECT_CHUNK_SIZE == 0) {
+            json_realloc(object->members, sizeof(struct json_object_member *) * (object->size + JSON_PARSE_OBJECT_CHUNK_SIZE));
         }
 
         object->members[object->size++] = member;
@@ -279,6 +279,8 @@ static struct json_object *json_parse_object() {
 
     return object;
 }
+
+#define JSON_PARSE_ARRAY_CHUNK_SIZE 8
 
 static struct json_array *json_parse_array() {
     next_token = json_get_next_token();
@@ -301,9 +303,9 @@ static struct json_array *json_parse_array() {
         }
 
         if (array->size == 0) {
-            json_malloc(array->values, sizeof(struct json_value *));
-        } else {
-            json_realloc(array->values, sizeof(struct json_value *) * (array->size + 1));
+            json_malloc(array->values, sizeof(struct json_value *) * JSON_PARSE_ARRAY_CHUNK_SIZE);
+        } else if (array->size % JSON_PARSE_ARRAY_CHUNK_SIZE == 0) {
+            json_realloc(array->values, sizeof(struct json_value *) * (array->size + JSON_PARSE_ARRAY_CHUNK_SIZE));
         }
 
         array->values[array->size++] = value;
@@ -345,8 +347,14 @@ static struct json_value *json_parse_value() {
         json_parse_value_case_value(JSON_TOKEN_STRING, JSON_STRING_VALUE, string_value)
         json_parse_value_case_value(JSON_TOKEN_NUMBER, JSON_NUMBER_VALUE, number_value)
         json_parse_value_case_value(JSON_TOKEN_FALSE, JSON_BOOLEAN_VALUE, boolean_value)
-        json_parse_value_case_value(JSON_TOKEN_NULL, JSON_NULL_VALUE, null_value)
         json_parse_value_case_value(JSON_TOKEN_TRUE, JSON_BOOLEAN_VALUE, boolean_value)
+
+        case JSON_TOKEN_NULL:
+            json_malloc(value, sizeof(struct json_value));
+            value->type = JSON_NULL_VALUE;
+            token_value = NULL;
+            next_token = json_get_next_token();
+            return value;
 
         case JSON_TOKEN_BEGIN_ARRAY:
             array = json_parse_array();
@@ -488,7 +496,7 @@ static void json_stringify_object(const struct json_object *object) {
 static void json_stringify_value(const struct json_value *value) {
     switch (value->type) {
         case JSON_NULL_VALUE:
-            json_stringify_append_string(value->null_value);
+            json_stringify_append_string("null");
             break;
 
         case JSON_BOOLEAN_VALUE:
@@ -559,7 +567,6 @@ static void json_object_free(struct json_object *object) {
 void json_value_free(struct json_value *value) {
     switch (value->type) {
         case JSON_NULL_VALUE:
-            free(value->null_value);
             break;
 
         case JSON_BOOLEAN_VALUE:
