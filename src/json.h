@@ -22,6 +22,8 @@
 #ifndef JSON_JSON_H
 #define JSON_JSON_H
 
+#define JSON_VERSION "json 1.0.0"
+
 #define JSON_ERROR_EMPTY_FILE 1
 #define JSON_ERROR_UNEXPECTED_TOKEN 2
 
