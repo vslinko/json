@@ -1,0 +1,4 @@
+{"array": [null,
+           true, false,
+           0, 1, -1, 1.1, 1.1e-2, 0,
+           "str\"ing", "UTF-8 строка"]}
