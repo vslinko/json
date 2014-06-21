@@ -86,3 +86,19 @@ vstd_test_benchmark(json_parse_benchmark, 1.0, {
         json_parse_result_free(result);
     }
 })
+
+/*
+ * 5 500 000 times per 1 second
+ */
+vstd_test_benchmark(json_stringify_benchmark, 1.0, {
+    char *source = "{\"array\":[null,true,false,-1.0e-2,\"string\"]}";
+    struct json_parse_result *result = json_parse(source);
+
+    for (int i = 0; i < 5500000; i++) {
+        char *stringified = json_stringify(result->value);
+        free(stringified);
+    }
+
+    json_value_free(result->value);
+    json_parse_result_free(result);
+})
