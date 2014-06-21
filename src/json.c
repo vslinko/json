@@ -38,8 +38,8 @@
     assert(pointer);
 
 static int json_get_next_token();
-struct json_object_member *json_parse_object_member();
-struct json_object *json_parse_object();
+static struct json_object_member *json_parse_object_member();
+static struct json_object *json_parse_object();
 static struct json_array *json_parse_array();
 static struct json_value *json_parse_value();
 struct json_parse_result *json_parse(const char *json);
@@ -83,12 +83,17 @@ void json_parse_result_free(struct json_parse_result *parse_result);
 
 static const char *source;
 static size_t source_length;
-static unsigned int last_error = 0;
+static unsigned int last_error;
+static unsigned int last_error_position;
 static unsigned int current_position;
 static unsigned int next_token;
 static char *token_value = NULL;
+static unsigned int token_value_length;
 
 static int json_get_next_token() {
+    token_value = NULL;
+    token_value_length = 0;
+
     if (current_position >= source_length) {
         return JSON_TOKEN_EOF;
     }
@@ -98,8 +103,6 @@ static int json_get_next_token() {
     while (json_is_whitespace(current_character)) {
         current_character = source[++current_position];
     }
-
-    int token_value_length = 0;
 
     switch (current_character) {
         case JSON_TOKEN_BEGIN_ARRAY:
@@ -216,9 +219,10 @@ invalid_number:
     return JSON_TOKEN_UNKNOWN;
 }
 
-struct json_object_member *json_parse_object_member() {
+static struct json_object_member *json_parse_object_member() {
     if (next_token != JSON_TOKEN_STRING) {
         last_error = JSON_ERROR_UNEXPECTED_TOKEN;
+        last_error_position = current_position - token_value_length;
         return NULL;
     }
 
@@ -228,6 +232,7 @@ struct json_object_member *json_parse_object_member() {
 
     if (next_token != JSON_TOKEN_NAME_SEPARATOR) {
         last_error = JSON_ERROR_UNEXPECTED_TOKEN;
+        last_error_position = current_position - token_value_length;
         free(name);
         return NULL;
     }
@@ -247,13 +252,8 @@ struct json_object_member *json_parse_object_member() {
     return member;
 }
 
-struct json_object *json_parse_object() {
+static struct json_object *json_parse_object() {
     struct json_object *object;
-
-    if (next_token != JSON_TOKEN_BEGIN_OBJECT) {
-        last_error = JSON_ERROR_UNEXPECTED_TOKEN;
-        return NULL;
-    }
 
     next_token = json_get_next_token();
 
@@ -281,11 +281,6 @@ struct json_object *json_parse_object() {
 }
 
 static struct json_array *json_parse_array() {
-    if (next_token != JSON_TOKEN_BEGIN_ARRAY) {
-        last_error = JSON_ERROR_UNEXPECTED_TOKEN;
-        return NULL;
-    }
-
     next_token = json_get_next_token();
 
     struct json_array *array;
@@ -323,6 +318,7 @@ static struct json_array *json_parse_array() {
     if (next_token != JSON_TOKEN_END_ARRAY) {
         json_array_free(array);
         last_error = JSON_ERROR_UNEXPECTED_TOKEN;
+        last_error_position = current_position;
         return NULL;
     }
 
@@ -374,6 +370,7 @@ static struct json_value *json_parse_value() {
 
         default:
             last_error = JSON_ERROR_UNEXPECTED_TOKEN;
+            last_error_position = current_position;
             return NULL;
     }
 }
@@ -386,13 +383,14 @@ struct json_parse_result *json_parse(const char *json) {
     source_length = strlen(json);
 
     if (source_length == 0) {
-        result->error = last_error = JSON_ERROR_EMPTY_FILE;
+        result->error = JSON_ERROR_EMPTY_FILE;
         result->error_position = 0;
         result->value = NULL;
         return result;
     }
 
     last_error = 0;
+    last_error_position = 0;
     current_position = 0;
     next_token = json_get_next_token();
 
@@ -400,7 +398,7 @@ struct json_parse_result *json_parse(const char *json) {
 
     if (last_error > 0) {
         result->error = last_error;
-        result->error_position = current_position;
+        result->error_position = last_error_position;
 
         if (token_value != NULL) {
             free(token_value);
@@ -528,7 +526,9 @@ char *json_stringify(const struct json_value *value) {
     return result;
 }
 
-/* FREE FUNCTIONS */
+/*
+ * FREE FUNCTIONS
+ */
 
 static void json_array_free(struct json_array *array) {
     if (array->size > 0) {
