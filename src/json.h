@@ -22,6 +22,8 @@
 #ifndef JSON_JSON_H
 #define JSON_JSON_H
 
+#include <stdbool.h>
+
 #define JSON_VERSION "json 1.0.0"
 
 #define JSON_ERROR_EMPTY_FILE 1
@@ -68,6 +70,14 @@ struct json_parse_result {
     unsigned int error_position;
     struct json_value *value;
 };
+
+struct json_value *json_null_value();
+struct json_value *json_boolean_value(bool value);
+struct json_value *json_string_value(const char *value);
+struct json_value *json_array_value();
+struct json_value *json_object_value();
+void json_array_push(struct json_value *array_value, struct json_value *value);
+void json_object_push(struct json_value *object_value, const char *name, struct json_value *value);
 
 struct json_parse_result *json_parse(const char *json);
 

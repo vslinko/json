@@ -4,8 +4,9 @@
             "target_name": "json",
             "type": "executable",
             "sources": [
+                "src/main.c",
                 "src/json.c",
-                "src/main.c"
+                "src/json_template.c"
             ]
         },
         {

@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "json.h"
+#include "json_template.h"
 
 #define SOURCE_CHUNK_SIZE 512
 
@@ -67,45 +68,48 @@ char *read_file(const char *path) {
     return source;
 }
 
-void parse_source(const char *source) {
-    struct json_parse_result *result = json_parse(source);
-
-    if (result->error > 0) {
-        fprintf(stderr, "ERROR #%d: %s at position %d\n", result->error, error_messages[result->error - 1], result->error_position);
-        exit(3);
-    }
-
-    char *processed_source = json_stringify(result->value);
-
-    puts(processed_source);
-
-    if (result->error == 0) {
-        json_value_free(result->value);
-    }
-    json_parse_result_free(result);
-    free(processed_source);
-}
-
-void parse_file(const char *path) {
-    char *source = read_file(path);
-
-    if (source == NULL) {
-        fprintf(stderr, "Unable to read file \"%s\"\n", path);
-        exit(2);
-    }
-
-    parse_source(source);
-
-    free(source);
-}
-
 int main(int argc, const char ** argv) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s JSON_FILE\n", argv[0]);
-        exit(1);
+        fprintf(stderr, "usage: json <json_file>...\n");
+        return 1;
     }
 
-    parse_file(argv[1]);
+    struct json_value **values = NULL;
+    size_t size = 0;
+
+    for (int i = 1; i < argc; i++) {
+        char *source = read_file(argv[i]);
+
+        if (source == NULL) {
+            fprintf(stderr, "Unable to read file \"%s\"\n", argv[i]);
+            return 2;
+        }
+
+        struct json_parse_result *result = json_parse(source);
+
+        if (result->error > 0) {
+            fprintf(stderr, "ERROR #%d: %s at position %d at file %s\n",
+                    result->error,
+                    error_messages[result->error - 1],
+                    result->error_position,
+                    argv[i]);
+            return 3;
+        }
+
+        if (size == 0) {
+            values = malloc(sizeof(struct json_value *));
+        } else {
+            values = realloc(values, sizeof(struct json_value *) * (size + 1));
+        }
+        assert(values);
+
+        values[size++] = result->value;
+        json_parse_result_free(result);
+    }
+
+    struct json_value *combined = json_combine_array(values, size);
+
+    puts(json_stringify(combined));
 
     return 0;
 }
