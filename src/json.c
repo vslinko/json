@@ -258,7 +258,12 @@ static struct json_object *json_parse_object() {
     json_malloc(object, sizeof(struct json_object));
     object->size = 0;
 
-    while (next_token != JSON_TOKEN_END_OBJECT) {
+    if (next_token == JSON_TOKEN_END_OBJECT) {
+        object->members = NULL;
+        return object;
+    }
+
+    while (true) {
         struct json_object_member *member = json_parse_object_member();
 
         if (member == NULL) {
@@ -273,6 +278,12 @@ static struct json_object *json_parse_object() {
         }
 
         object->members[object->size++] = member;
+
+        if (next_token != JSON_TOKEN_VALUE_SEPARATOR) {
+            break;
+        }
+
+        next_token = json_get_next_token();
     }
 
     return object;
