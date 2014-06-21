@@ -22,11 +22,13 @@
 #ifndef JSON_TEMPLATE_H
 #define JSON_TEMPLATE_H
 
-#include <stdarg.h>
+#include <stdio.h>
 #include "json.h"
 
 struct json_value *json_combine(size_t arguments_length, ...);
 
 struct json_value *json_combine_array(struct json_value **values, size_t size);
+
+struct json_value *json_compile(struct json_value *json_template, struct json_value *data);
 
 #endif

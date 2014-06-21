@@ -19,9 +19,25 @@
  * THE SOFTWARE.
  */
 
-#include <stdlib.h>
-#include <string.h>
+#include <assert.h> /* assert */
+#include <stdarg.h> /* va_list, va_start, va_end */
 #include "json_template.h"
+
+/*
+ * TABLE OF CONTENTS
+ */
+
+struct json_value *json_combine(size_t arguments_length, ...);
+struct json_value *json_combine_array(struct json_value **values, size_t size);
+
+static struct json_value *json_compile_object(struct json_value *instruction);
+static struct json_value *json_compile_path(struct json_value *instruction);
+static struct json_value *json_compile_instruction(struct json_value *instruction);
+struct json_value *json_compile(struct json_value *json_template, struct json_value *data);
+
+/*
+ * JSON COMBINE
+ */
 
 struct json_value *json_combine(size_t arguments_length, ...) {
     va_list arguments;
@@ -51,4 +67,57 @@ struct json_value *json_combine_array(struct json_value **values, size_t size) {
     }
 
     return object;
+}
+
+/*
+ * JSON COMPILE
+ */
+
+static struct json_value *context;
+
+static struct json_value *json_compile_object(struct json_value *instruction) {
+    struct json_value *properties_value = json_object_get(instruction, "properties");
+    assert(properties_value);
+    assert(properties_value->type == JSON_OBJECT_VALUE);
+
+    struct json_object *properties = properties_value->object_value;
+
+    struct json_value *result = json_object_value();
+
+    for (int i = 0; i < properties->size; i++) {
+        json_object_push(result,
+                         properties->members[i]->name,
+                         json_compile_instruction(properties->members[i]->value));
+    }
+
+    return result;
+}
+
+static struct json_value *json_compile_path(struct json_value *instruction) {
+    struct json_value *path_value = json_object_get(instruction, "path");
+    assert(path_value);
+    assert(path_value->type == JSON_STRING_VALUE);
+
+    struct json_value *result = json_string_value(path_value->string_value);
+    return result;
+}
+
+static struct json_value *json_compile_instruction(struct json_value *instruction) {
+    assert(instruction->type == JSON_OBJECT_VALUE);
+
+    if (json_object_has(instruction, "properties")) {
+        return json_compile_object(instruction);
+    } else if (json_object_has(instruction, "path")) {
+        return json_compile_path(instruction);
+    }
+
+    return NULL;
+}
+
+struct json_value *json_compile(struct json_value *json_template, struct json_value *data) {
+    context = data;
+    struct json_value *result = json_compile_instruction(json_template);
+    context = NULL;
+
+    return result;
 }

@@ -1,0 +1,20 @@
+{
+    "properties": {
+        "aa": {"path": "srcs[0].a"},
+        "bb": {"path": "srcs[0].b"},
+        "cc": {"path": "srcs[0].c"},
+        "dd": {"path": "srcs[0].d"},
+        "ee": {"path": "srcs[0].e"},
+        "zz": {"path": "srcs[0].z"},
+        "ff": {"path": "srcs[0].f"},
+        "hh": {"path": "srcs[0].f", "stringified": true},
+        "gg": {
+            "properties": {
+                "aa1": {"path": "srcs[0].f.a"},
+                "ee1": {"path": "srcs[0].f.e"},
+                "aa2": {"path": "srcs[1].g.a"},
+                "ee2": {"path": "srcs[1].g.e"}
+            }
+        }
+    }
+}

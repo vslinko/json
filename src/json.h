@@ -78,6 +78,8 @@ struct json_value *json_array_value();
 struct json_value *json_object_value();
 void json_array_push(struct json_value *array_value, struct json_value *value);
 void json_object_push(struct json_value *object_value, const char *name, struct json_value *value);
+bool json_object_has(struct json_value *object_value, const char *name);
+struct json_value *json_object_get(struct json_value *object_value, const char *name);
 
 struct json_parse_result *json_parse(const char *json);
 

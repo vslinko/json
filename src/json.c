@@ -47,6 +47,8 @@ struct json_value *json_array_value();
 struct json_value *json_object_value();
 void json_array_push(struct json_value *array_value, struct json_value *value);
 void json_object_push(struct json_value *object_value, const char *name, struct json_value *value);
+bool json_object_has(struct json_value *object_value, const char *name);
+struct json_value *json_object_get(struct json_value *object_value, const char *name);
 
 static int json_get_next_token();
 static struct json_object_member *json_parse_object_member();
@@ -158,6 +160,32 @@ void json_object_push(struct json_value *object_value, const char *name, struct 
     }
 
     object->members[object->size++] = member;
+}
+
+bool json_object_has(struct json_value *object_value, const char *name) {
+    assert(object_value->type == JSON_OBJECT_VALUE);
+    struct json_object *object = object_value->object_value;
+
+    for (int i = 0; i < object->size; i++) {
+        if (strcmp(object->members[i]->name, name) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+struct json_value *json_object_get(struct json_value *object_value, const char *name) {
+    assert(object_value->type == JSON_OBJECT_VALUE);
+    struct json_object *object = object_value->object_value;
+
+    for (int i = 0; i < object->size; i++) {
+        if (strcmp(object->members[i]->name, name) == 0) {
+            return object->members[i]->value;
+        }
+    }
+
+    return NULL;
 }
 
 /*
