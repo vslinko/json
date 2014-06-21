@@ -76,6 +76,7 @@ static char json_search_get_next_token() {
 
         char *array_index_string = malloc(sizeof(char) * (array_index_length + 1));
         memcpy(array_index_string, search_path + current_position - array_index_length - 1, array_index_length);
+        array_index_string[array_index_length] = '\0';
         array_index = atoi(array_index_string);
         free(array_index_string);
         return JSON_SEARCH_TOKEN_ARRAY;
@@ -104,6 +105,7 @@ static char json_search_get_next_token() {
 
         property_name = malloc(sizeof(char) * (property_name_length + 1));
         memcpy(property_name, search_path + current_position - property_name_length, property_name_length);
+        property_name[property_name_length] = '\0';
         return JSON_SEARCH_TOKEN_PROPERTY;
     }
 
