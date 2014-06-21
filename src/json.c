@@ -360,6 +360,7 @@ static struct json_object *json_parse_object() {
     object->size = 0;
 
     if (next_token == JSON_TOKEN_END_OBJECT) {
+        next_token = json_get_next_token();
         object->members = NULL;
         return object;
     }
@@ -387,6 +388,15 @@ static struct json_object *json_parse_object() {
         next_token = json_get_next_token();
     }
 
+    if (next_token != JSON_TOKEN_END_OBJECT) {
+        json_object_free(object);
+        last_error = JSON_ERROR_UNEXPECTED_TOKEN;
+        last_error_position = current_position;
+        return NULL;
+    }
+
+    next_token = json_get_next_token();
+
     return object;
 }
 
@@ -398,6 +408,7 @@ static struct json_array *json_parse_array() {
     array->size = 0;
 
     if (next_token == JSON_TOKEN_END_ARRAY) {
+        next_token = json_get_next_token();
         array->values = NULL;
         return array;
     }
@@ -665,7 +676,7 @@ static void json_object_free(struct json_object *object) {
             json_value_free(object->members[i]->value);
             free(object->members[i]);
         }
-        
+
         free(object->members);
     }
 

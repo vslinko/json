@@ -65,13 +65,16 @@ vstd_test_unit(json, 100000, {
     assert_successful_parsing("\"UTF-8 строка\"")
     assert_successful_parsing("[null,true,false,1,\"string\"]")
     assert_successful_parsing("{\"array\":[null,true,false,1,\"string\"]}")
+    assert_successful_parsing("[[],[]]")
     assert_successful_parsing("{\"a\":1,\"b\":2}")
+    assert_successful_parsing("{\"a\":{},\"b\":{}}")
 
     assert_failed_parsing("", JSON_ERROR_EMPTY_FILE, 0)
     assert_failed_parsing("string without quotes", JSON_ERROR_UNEXPECTED_TOKEN, 0)
     assert_failed_parsing("[1", JSON_ERROR_UNEXPECTED_TOKEN, 2)
     assert_failed_parsing("{1}", JSON_ERROR_UNEXPECTED_TOKEN, 1)
     assert_failed_parsing("{", JSON_ERROR_UNEXPECTED_TOKEN, 1)
+    assert_failed_parsing("{\"a\": 1", JSON_ERROR_UNEXPECTED_TOKEN, 7)
     assert_failed_parsing("{\"a\" 1}", JSON_ERROR_UNEXPECTED_TOKEN, 5)
 })
 
