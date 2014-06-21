@@ -133,8 +133,7 @@ static int json_get_next_token() {
         case JSON_TOKEN_FALSE:
             if (source_length - current_position >= 5 && memcmp(source + current_position, "false", 5) == 0) {
                 current_position += 5;
-                json_malloc(token_value, sizeof(char) * 6);
-                strcpy(token_value, "false");
+                token_value = "false";
                 return JSON_TOKEN_FALSE;
             }
             break;
@@ -142,8 +141,7 @@ static int json_get_next_token() {
         case JSON_TOKEN_TRUE:
             if (source_length - current_position >= 4 && memcmp(source + current_position, "true", 4) == 0) {
                 current_position += 4;
-                json_malloc(token_value, sizeof(char) * 5);
-                strcpy(token_value, "true");
+                token_value = "true";
                 return JSON_TOKEN_TRUE;
             }
             break;
@@ -567,10 +565,7 @@ static void json_object_free(struct json_object *object) {
 void json_value_free(struct json_value *value) {
     switch (value->type) {
         case JSON_NULL_VALUE:
-            break;
-
         case JSON_BOOLEAN_VALUE:
-            free(value->boolean_value);
             break;
 
         case JSON_NUMBER_VALUE:
