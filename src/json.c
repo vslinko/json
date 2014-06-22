@@ -40,6 +40,9 @@
 #define JSON_ARRAY_CHUNK_SIZE 8
 #define JSON_OBJECT_CHUNK_SIZE 8
 
+static void json_escape_string_append_character(char character);
+char *json_escape_string(const char *string);
+
 struct json_value *json_null_value();
 struct json_value *json_boolean_value(bool value);
 struct json_value *json_string_value(const char *value);
@@ -73,6 +76,39 @@ void json_parse_result_free(struct json_parse_result *parse_result);
 /*
  * JSON CONSTRUCTOR
  */
+
+#define JSON_ESCAPE_STRING_CHUNK_SIZE 64
+
+static char *escape_result;
+static int escape_result_length;
+
+static void json_escape_string_append_character(char character) {
+    if (escape_result_length == 0) {
+        json_malloc(escape_result, sizeof(char) * (JSON_ESCAPE_STRING_CHUNK_SIZE + 1));
+    } else if (escape_result_length % JSON_ESCAPE_STRING_CHUNK_SIZE == 0) {
+        json_realloc(escape_result, sizeof(char) * (escape_result_length + JSON_ESCAPE_STRING_CHUNK_SIZE + 1));
+    }
+
+    escape_result[escape_result_length++] = character;
+    escape_result[escape_result_length] = '\0';
+}
+
+char *json_escape_string(const char *string) {
+    size_t string_length = strlen(string);
+    escape_result_length = 0;
+
+    for (int position = 0; position < string_length; position++) {
+        char character = string[position];
+
+        if (character == '"') {
+            json_escape_string_append_character('\\');
+        }
+
+        json_escape_string_append_character(character);
+    }
+
+    return escape_result;
+}
 
 struct json_value *json_null_value() {
     struct json_value *null_value;

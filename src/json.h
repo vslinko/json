@@ -71,6 +71,8 @@ struct json_parse_result {
     struct json_value *value;
 };
 
+char *json_escape_string(const char *string);
+
 struct json_value *json_null_value();
 struct json_value *json_boolean_value(bool value);
 struct json_value *json_string_value(const char *value);
@@ -86,7 +88,6 @@ struct json_parse_result *json_parse(const char *json);
 char *json_stringify(const struct json_value *value);
 
 void json_value_free(struct json_value *value);
-
 void json_parse_result_free(struct json_parse_result *parse_result);
 
 #endif
