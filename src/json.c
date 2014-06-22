@@ -46,12 +46,18 @@ char *json_escape_string(const char *string);
 struct json_value *json_null_value();
 struct json_value *json_boolean_value(bool value);
 struct json_value *json_string_value(const char *value);
+struct json_value *json_number_value(const char *value);
 struct json_value *json_array_value();
 struct json_value *json_object_value();
 void json_array_push(struct json_value *array_value, struct json_value *value);
 void json_object_push(struct json_value *object_value, const char *name, struct json_value *value);
 bool json_object_has(struct json_value *object_value, const char *name);
 struct json_value *json_object_get(struct json_value *object_value, const char *name);
+
+static struct json_value *json_clone_array(const struct json_value *source);
+static struct json_value *json_clone_object(const struct json_value *source);
+static struct json_value *json_clone_value(const struct json_value *source);
+struct json_value *json_clone(const struct json_value *source);
 
 static int json_get_next_token();
 static struct json_object_member *json_parse_object_member();
@@ -138,6 +144,15 @@ struct json_value *json_string_value(const char *value) {
     return string_value;
 }
 
+struct json_value *json_number_value(const char *value) {
+    struct json_value *number_value;
+    json_malloc(number_value, sizeof(struct json_value));
+    number_value->type = JSON_NUMBER_VALUE;
+    number_value->number_value = malloc(sizeof(char) * (strlen(value) + 1));
+    strcpy(number_value->number_value, value);
+    return number_value;
+}
+
 struct json_value *json_array_value() {
     struct json_array *array;
     json_malloc(array, sizeof(struct json_array));
@@ -222,6 +237,58 @@ struct json_value *json_object_get(struct json_value *object_value, const char *
     }
 
     return NULL;
+}
+
+/*
+ * JSON CLONE
+ */
+
+static struct json_value *json_clone_array(const struct json_value *source) {
+    struct json_value *array_value = json_array_value();
+
+    for (int i = 0; i < source->array_value->size; i++) {
+        json_array_push(array_value, json_clone_value(source->array_value->values[i]));
+    }
+
+    return array_value;
+}
+
+static struct json_value *json_clone_object(const struct json_value *source) {
+    struct json_value *object_value = json_object_value();
+
+    for (int i = 0; i < source->object_value->size; i++) {
+        json_object_push(object_value,
+                         source->object_value->members[i]->name,
+                         json_clone_value(source->object_value->members[i]->value));
+    }
+
+    return object_value;
+}
+
+static struct json_value *json_clone_value(const struct json_value *source) {
+    switch (source->type) {
+        case JSON_NULL_VALUE:
+            return json_null_value();
+
+        case JSON_BOOLEAN_VALUE:
+            return json_boolean_value(strcmp(source->boolean_value, "true") == 0);
+
+        case JSON_STRING_VALUE:
+            return json_string_value(source->string_value);
+
+        case JSON_NUMBER_VALUE:
+            return json_number_value(source->number_value);
+
+        case JSON_ARRAY_VALUE:
+            return json_clone_array(source);
+
+        case JSON_OBJECT_VALUE:
+            return json_clone_object(source);
+    }
+}
+
+struct json_value *json_clone(const struct json_value *source) {
+    return json_clone_value(source);
 }
 
 /*
