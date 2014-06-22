@@ -21,6 +21,9 @@
 
 #include <assert.h> /* assert */
 #include <stdarg.h> /* va_list, va_start, va_end */
+#include <stdlib.h> /* free */
+#include <string.h> /* strcmp */
+#include "json_search.h"
 #include "json_template.h"
 
 /*
@@ -85,9 +88,11 @@ static struct json_value *json_compile_object(struct json_value *instruction) {
     struct json_value *result = json_object_value();
 
     for (int i = 0; i < properties->size; i++) {
-        json_object_push(result,
-                         properties->members[i]->name,
-                         json_compile_instruction(properties->members[i]->value));
+        struct json_value *property = json_compile_instruction(properties->members[i]->value);
+
+        if (property != NULL) {
+            json_object_push(result, properties->members[i]->name, property);
+        }
     }
 
     return result;
@@ -98,8 +103,29 @@ static struct json_value *json_compile_path(struct json_value *instruction) {
     assert(path_value);
     assert(path_value->type == JSON_STRING_VALUE);
 
-    struct json_value *result = json_string_value(path_value->string_value);
-    return result;
+    struct json_value *value = json_search(context, path_value->string_value);
+
+    if (value == NULL) {
+        return NULL;
+    }
+
+    value = json_clone(value);
+
+    if (json_object_has(instruction, "stringify")) {
+        struct json_value *stringify_value = json_object_get(instruction, "stringify");
+        assert(stringify_value);
+        assert(stringify_value->type == JSON_BOOLEAN_VALUE);
+
+        if (strcmp(stringify_value->boolean_value, "true") == 0) {
+            char *stringify = json_stringify(value);
+            char *escaped_stringify = json_escape_string(stringify);
+            value = json_string_value(escaped_stringify);
+            free(escaped_stringify);
+            free(stringify);
+        }
+    }
+
+    return value;
 }
 
 static struct json_value *json_compile_instruction(struct json_value *instruction) {

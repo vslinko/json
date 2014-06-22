@@ -7,7 +7,7 @@
         "ee": {"path": "srcs[0].e"},
         "zz": {"path": "srcs[0].z"},
         "ff": {"path": "srcs[0].f"},
-        "hh": {"path": "srcs[0].f", "stringified": true},
+        "hh": {"path": "srcs[0].f", "stringify": true},
         "gg": {
             "properties": {
                 "aa1": {"path": "srcs[0].f.a"},

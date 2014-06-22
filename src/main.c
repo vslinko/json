@@ -93,7 +93,7 @@ struct json_value *parse_file(const char *path) {
     return value;
 }
 
-int main(int argc, const char ** argv) {
+int main(int argc, const char **argv) {
     if (argc < 3) {
         fprintf(stderr, "usage: json <template_file> <json_file>...\n");
         return 1;
@@ -118,6 +118,11 @@ int main(int argc, const char ** argv) {
 
     struct json_value *combined = json_combine_array(values, size);
     struct json_value *compiled = json_compile(json_template, combined);
+
+    if (compiled == NULL) {
+        fprintf(stderr, "Unable to compile template\n");
+        exit(4);
+    }
 
     puts(json_stringify(compiled));
 
