@@ -34,8 +34,7 @@ add_executable(
 )
 target_compile_options(
   json-test
-  PRIVATE -g
-  PRIVATE -O0
+  PRIVATE -O2
 )
 target_compile_options(
   json-test
