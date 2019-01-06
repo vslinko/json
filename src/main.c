@@ -25,7 +25,6 @@
 #include <stdlib.h>
 
 #include "json.h"
-#include "json_template.h"
 
 #define SOURCE_CHUNK_SIZE 512
 
@@ -100,37 +99,14 @@ struct json_value* parse_file(const char* path) {
 }
 
 int main(int argc, const char** argv) {
-    if (argc < 3) {
-        fprintf(stderr, "usage: json <template_file> <json_file>...\n");
+    if (argc < 2) {
+        fprintf(stderr, "usage: json <json_file>\n");
         return 1;
     }
 
-    struct json_value* json_template = parse_file(argv[1]);
-    struct json_value** values = NULL;
-    size_t size = 0;
+    struct json_value* json_file = parse_file(argv[1]);
 
-    for (int i = 2; i < argc; i++) {
-        struct json_value* value = parse_file(argv[i]);
-
-        if (size == 0) {
-            values = malloc(sizeof(struct json_value*));
-        } else {
-            values = realloc(values, sizeof(struct json_value*) * (size + 1));
-        }
-        assert(values);
-
-        values[size++] = value;
-    }
-
-    struct json_value* combined = json_combine_array(values, size);
-    struct json_value* compiled = json_compile(json_template, combined);
-
-    if (compiled == NULL) {
-        fprintf(stderr, "Unable to compile template\n");
-        exit(4);
-    }
-
-    puts(json_stringify(compiled));
+    puts(json_stringify(json_file));
 
     return 0;
 }

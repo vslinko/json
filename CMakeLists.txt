@@ -6,7 +6,6 @@ add_executable(
   src/main.c
   src/json.c
   src/json_search.c
-  src/json_template.c
 )
 target_compile_options(
   json
@@ -30,8 +29,6 @@ add_executable(
   src/json.c
   src/_json_search_test.c
   src/json_search.c
-  src/_json_template_test.c
-  src/json_template.c
 )
 target_compile_options(
   json-test
