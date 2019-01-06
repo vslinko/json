@@ -50,7 +50,7 @@ struct json_value *json_combine(size_t arguments_length, ...) {
     struct json_value *object = json_object_value();
     json_object_push(object, "srcs", array);
 
-    for (int i = 0; i < arguments_length; i++) {
+    for (size_t i = 0; i < arguments_length; i++) {
         struct json_value *value = va_arg(arguments, struct json_value *);
         json_array_push(array, value);
     }
@@ -65,7 +65,7 @@ struct json_value *json_combine_array(struct json_value **values, size_t size) {
     struct json_value *object = json_object_value();
     json_object_push(object, "srcs", array);
 
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         json_array_push(array, values[i]);
     }
 
@@ -87,7 +87,7 @@ static struct json_value *json_compile_object(struct json_value *instruction) {
 
     struct json_value *result = json_object_value();
 
-    for (int i = 0; i < properties->size; i++) {
+    for (unsigned int i = 0; i < properties->size; i++) {
         struct json_value *property = json_compile_instruction(properties->members[i]->value);
 
         if (property != NULL) {

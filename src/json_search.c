@@ -28,7 +28,7 @@
  * TABLE OF CONTENTS
  */
 
-static char json_search_get_next_token();
+static char json_search_get_next_token(void);
 struct json_value *json_search(struct json_value *root, const char *path);
 
 /*
@@ -132,7 +132,7 @@ struct json_value *json_search(struct json_value *root, const char *path) {
 
                 struct json_value *new_root = NULL;
 
-                for (int i = 0; i < root->object_value->size; i++) {
+                for (unsigned int i = 0; i < root->object_value->size; i++) {
                     if (strcmp(root->object_value->members[i]->name, property_name) == 0) {
                         new_root = root->object_value->members[i]->value;
                     }

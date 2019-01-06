@@ -43,12 +43,12 @@
 static void json_escape_string_append_character(char character);
 char *json_escape_string(const char *string);
 
-struct json_value *json_null_value();
+struct json_value *json_null_value(void);
 struct json_value *json_boolean_value(bool value);
 struct json_value *json_string_value(const char *value);
 struct json_value *json_number_value(const char *value);
-struct json_value *json_array_value();
-struct json_value *json_object_value();
+struct json_value *json_array_value(void);
+struct json_value *json_object_value(void);
 void json_array_push(struct json_value *array_value, struct json_value *value);
 void json_object_push(struct json_value *object_value, const char *name, struct json_value *value);
 bool json_object_has(struct json_value *object_value, const char *name);
@@ -59,14 +59,14 @@ static struct json_value *json_clone_object(const struct json_value *source);
 static struct json_value *json_clone_value(const struct json_value *source);
 struct json_value *json_clone(const struct json_value *source);
 
-static int json_get_next_token();
-static struct json_object_member *json_parse_object_member();
-static struct json_object *json_parse_object();
-static struct json_array *json_parse_array();
-static struct json_value *json_parse_value();
+static int json_get_next_token(void);
+static struct json_object_member *json_parse_object_member(void);
+static struct json_object *json_parse_object(void);
+static struct json_array *json_parse_array(void);
+static struct json_value *json_parse_value(void);
 struct json_parse_result *json_parse(const char *json);
 
-static void json_stringify_init_string();
+static void json_stringify_init_string(void);
 static void json_stringify_append_character(char character);
 static void json_stringify_append_string(const char *string);
 static void json_stringify_array(const struct json_array *array);
@@ -103,7 +103,7 @@ char *json_escape_string(const char *string) {
     size_t string_length = strlen(string);
     escape_result_length = 0;
 
-    for (int position = 0; position < string_length; position++) {
+    for (size_t position = 0; position < string_length; position++) {
         char character = string[position];
 
         if (character == '"') {
@@ -217,7 +217,7 @@ bool json_object_has(struct json_value *object_value, const char *name) {
     assert(object_value->type == JSON_OBJECT_VALUE);
     struct json_object *object = object_value->object_value;
 
-    for (int i = 0; i < object->size; i++) {
+    for (unsigned int i = 0; i < object->size; i++) {
         if (strcmp(object->members[i]->name, name) == 0) {
             return true;
         }
@@ -230,7 +230,7 @@ struct json_value *json_object_get(struct json_value *object_value, const char *
     assert(object_value->type == JSON_OBJECT_VALUE);
     struct json_object *object = object_value->object_value;
 
-    for (int i = 0; i < object->size; i++) {
+    for (unsigned int i = 0; i < object->size; i++) {
         if (strcmp(object->members[i]->name, name) == 0) {
             return object->members[i]->value;
         }
@@ -246,7 +246,7 @@ struct json_value *json_object_get(struct json_value *object_value, const char *
 static struct json_value *json_clone_array(const struct json_value *source) {
     struct json_value *array_value = json_array_value();
 
-    for (int i = 0; i < source->array_value->size; i++) {
+    for (unsigned int i = 0; i < source->array_value->size; i++) {
         json_array_push(array_value, json_clone_value(source->array_value->values[i]));
     }
 
@@ -256,7 +256,7 @@ static struct json_value *json_clone_array(const struct json_value *source) {
 static struct json_value *json_clone_object(const struct json_value *source) {
     struct json_value *object_value = json_object_value();
 
-    for (int i = 0; i < source->object_value->size; i++) {
+    for (unsigned int i = 0; i < source->object_value->size; i++) {
         json_object_push(object_value,
                          source->object_value->members[i]->name,
                          json_clone_value(source->object_value->members[i]->value));
@@ -714,7 +714,7 @@ static void json_stringify_append_string(const char *string) {
 static void json_stringify_array(const struct json_array *array) {
     json_stringify_append_character('[');
 
-    for (int i = 0; i < array->size; i++) {
+    for (unsigned int i = 0; i < array->size; i++) {
         if (i != 0) {
             json_stringify_append_character(',');
         }
@@ -728,7 +728,7 @@ static void json_stringify_array(const struct json_array *array) {
 static void json_stringify_object(const struct json_object *object) {
     json_stringify_append_character('{');
 
-    for (int i = 0; i < object->size; i++) {
+    for (unsigned int i = 0; i < object->size; i++) {
         if (i != 0) {
             json_stringify_append_character(',');
         }
@@ -790,7 +790,7 @@ char *json_stringify(const struct json_value *value) {
 
 static void json_array_free(struct json_array *array) {
     if (array->size > 0) {
-        for (int i = 0; i < array->size; i++) {
+        for (unsigned int i = 0; i < array->size; i++) {
             json_value_free(array->values[i]);
         }
 
@@ -802,7 +802,7 @@ static void json_array_free(struct json_array *array) {
 
 static void json_object_free(struct json_object *object) {
     if (object->size > 0) {
-        for (int i = 0; i < object->size; i++) {
+        for (unsigned int i = 0; i < object->size; i++) {
             free(object->members[i]->name);
             json_value_free(object->members[i]->value);
             free(object->members[i]);

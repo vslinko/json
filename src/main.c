@@ -33,6 +33,7 @@ const char *error_messages[] = {
     "JSON_ERROR_UNEXPECTED_TOKEN"
 };
 
+char *read_file(const char *path);
 char *read_file(const char *path) {
     FILE *handle = fopen(path, "r");
 
@@ -68,6 +69,7 @@ char *read_file(const char *path) {
     return source;
 }
 
+struct json_value *parse_file(const char *path);
 struct json_value *parse_file(const char *path) {
     char *source = read_file(path);
 
