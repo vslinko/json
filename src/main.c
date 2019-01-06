@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include "json.h"
+#include "json_search.h"
 
 #define SOURCE_CHUNK_SIZE 512
 
@@ -100,13 +101,22 @@ struct json_value* parse_file(const char* path) {
 
 int main(int argc, const char** argv) {
     if (argc < 2) {
-        fprintf(stderr, "usage: json <json_file>\n");
+        fprintf(stderr, "usage: json <json_file> [search_path]\n");
         return 1;
     }
 
-    struct json_value* json_file = parse_file(argv[1]);
+    struct json_value* json_value = parse_file(argv[1]);
 
-    puts(json_stringify(json_file));
+    if (argc >= 3) {
+        json_value = json_search(json_value, argv[2]);
+
+        if (!json_value) {
+            fprintf(stderr, "Unable to find %s\n", argv[2]);
+            return 1;
+        }
+    }
+
+    puts(json_stringify(json_value));
 
     return 0;
 }
