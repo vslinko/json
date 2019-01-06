@@ -246,10 +246,8 @@ struct json_value* json_object_value() {
     return object_value;
 }
 
-void json_array_push(struct json_value* array_value, struct json_value* value) {
-    assert(array_value->type == JSON_ARRAY_VALUE);
-    struct json_array* array = array_value->array_value;
-
+static void _json_array_push(struct json_array* array, struct json_value* value);
+static void _json_array_push(struct json_array* array, struct json_value* value) {
     if (array->size == 0) {
         json_malloc(array->values, sizeof(struct json_value*) * JSON_ARRAY_CHUNK_SIZE);
     } else if (array->size % JSON_ARRAY_CHUNK_SIZE == 0) {
@@ -262,15 +260,13 @@ void json_array_push(struct json_value* array_value, struct json_value* value) {
     array->values[array->size++] = value;
 }
 
-void json_object_push(struct json_value* object_value, const char* name, struct json_value* value) {
-    assert(object_value->type == JSON_OBJECT_VALUE);
-    struct json_object* object = object_value->object_value;
+void json_array_push(struct json_value* array_value, struct json_value* value) {
+    assert(array_value->type == JSON_ARRAY_VALUE);
+    _json_array_push(array_value->array_value, value);
+}
 
-    struct json_object_member* member = json_object_member_alloc();
-    json_malloc(member->name, sizeof(char) * (strlen(name) + 1));
-    strcpy(member->name, name);
-    member->value = value;
-
+static void _json_object_push(struct json_object* object, struct json_object_member* member);
+static void _json_object_push(struct json_object* object, struct json_object_member* member) {
     if (object->size == 0) {
         json_malloc(object->members, sizeof(struct json_object_member*) * JSON_OBJECT_CHUNK_SIZE);
     } else if (object->size % JSON_OBJECT_CHUNK_SIZE == 0) {
@@ -281,6 +277,17 @@ void json_object_push(struct json_value* object_value, const char* name, struct 
     }
 
     object->members[object->size++] = member;
+}
+
+void json_object_push(struct json_value* object_value, const char* name, struct json_value* value) {
+    assert(object_value->type == JSON_OBJECT_VALUE);
+
+    struct json_object_member* member = json_object_member_alloc();
+    json_malloc(member->name, sizeof(char) * (strlen(name) + 1));
+    strcpy(member->name, name);
+    member->value = value;
+
+    _json_object_push(object_value->object_value, member);
 }
 
 bool json_object_has(struct json_value* object_value, const char* name) {
@@ -582,19 +589,7 @@ static struct json_object* json_parse_object() {
             return NULL;
         }
 
-        if (object->size == 0) {
-            json_malloc(
-                object->members,
-                sizeof(struct json_object_member*) * JSON_OBJECT_CHUNK_SIZE
-            );
-        } else if (object->size % JSON_OBJECT_CHUNK_SIZE == 0) {
-            json_realloc(
-                object->members,
-                sizeof(struct json_object_member*) * (object->size + JSON_OBJECT_CHUNK_SIZE)
-            );
-        }
-
-        object->members[object->size++] = member;
+        _json_object_push(object, member);
 
         if (next_token != JSON_TOKEN_VALUE_SEPARATOR) {
             break;
@@ -635,16 +630,7 @@ static struct json_array* json_parse_array() {
             return NULL;
         }
 
-        if (array->size == 0) {
-            json_malloc(array->values, sizeof(struct json_value*) * JSON_ARRAY_CHUNK_SIZE);
-        } else if (array->size % JSON_ARRAY_CHUNK_SIZE == 0) {
-            json_realloc(
-                array->values,
-                sizeof(struct json_value*) * (array->size + JSON_ARRAY_CHUNK_SIZE)
-            );
-        }
-
-        array->values[array->size++] = value;
+        _json_array_push(array, value);
 
         if (next_token != JSON_TOKEN_VALUE_SEPARATOR) {
             break;
