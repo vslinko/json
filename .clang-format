@@ -1,0 +1,13 @@
+BasedOnStyle: Chromium
+---
+Language: Cpp
+AlignEscapedNewlines: DontAlign
+AlignTrailingComments: false
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeTernaryOperators: true
+ColumnLimit: 100
+Cpp11BracedListStyle: false
+IncludeBlocks: Regroup
+IndentWidth: 4
+SpaceAfterCStyleCast: true
+SpacesBeforeTrailingComments: 1

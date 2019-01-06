@@ -19,8 +19,9 @@
  * THE SOFTWARE.
  */
 
-#include <vstd/test.h>
 #include <string.h>
+#include <vstd/test.h>
+
 #include "json_template.h"
 
 #define assert_successful(template, data, espected) \
@@ -40,16 +41,16 @@
     json_value_free(data_value); \
     json_value_free(template_value);
 
-static struct json_parse_result *parse_result;
-static struct json_value *template_value;
-static struct json_value *data_value;
-static struct json_value *result_value;
-static char *result;
+static struct json_parse_result* parse_result;
+static struct json_value* template_value;
+static struct json_value* data_value;
+static struct json_value* result_value;
+static char* result;
 
 static void vstd_setup() {}
 
 static void vstd_teardown() {}
 
 vstd_test_unit(json_template, 10000, {
-    assert_successful("{\"properties\":{\"b\":{\"path\":\"a\"}}}", "{\"a\":1}", "{\"b\":1}")
+    assert_successful("{\"properties\":{\"b\":{\"path\":\"a\"}}}", "{\"a\":1}", "{\"b\":1}");
 })

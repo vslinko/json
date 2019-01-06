@@ -24,6 +24,6 @@
 
 #include "json.h"
 
-struct json_value *json_search(struct json_value *root, const char *path);
+struct json_value* json_search(struct json_value* root, const char* path);
 
 #endif

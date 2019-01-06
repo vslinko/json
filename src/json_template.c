@@ -19,39 +19,41 @@
  * THE SOFTWARE.
  */
 
+#include "json_template.h"
+
 #include <assert.h> /* assert */
 #include <stdarg.h> /* va_list, va_start, va_end */
 #include <stdlib.h> /* free */
 #include <string.h> /* strcmp */
+
 #include "json_search.h"
-#include "json_template.h"
 
 /*
  * TABLE OF CONTENTS
  */
 
-struct json_value *json_combine(size_t arguments_length, ...);
-struct json_value *json_combine_array(struct json_value **values, size_t size);
+struct json_value* json_combine(size_t arguments_length, ...);
+struct json_value* json_combine_array(struct json_value** values, size_t size);
 
-static struct json_value *json_compile_object(struct json_value *instruction);
-static struct json_value *json_compile_path(struct json_value *instruction);
-static struct json_value *json_compile_instruction(struct json_value *instruction);
-struct json_value *json_compile(struct json_value *json_template, struct json_value *data);
+static struct json_value* json_compile_object(struct json_value* instruction);
+static struct json_value* json_compile_path(struct json_value* instruction);
+static struct json_value* json_compile_instruction(struct json_value* instruction);
+struct json_value* json_compile(struct json_value* json_template, struct json_value* data);
 
 /*
  * JSON COMBINE
  */
 
-struct json_value *json_combine(size_t arguments_length, ...) {
+struct json_value* json_combine(size_t arguments_length, ...) {
     va_list arguments;
     va_start(arguments, arguments_length);
 
-    struct json_value *array = json_array_value();
-    struct json_value *object = json_object_value();
+    struct json_value* array = json_array_value();
+    struct json_value* object = json_object_value();
     json_object_push(object, "srcs", array);
 
     for (size_t i = 0; i < arguments_length; i++) {
-        struct json_value *value = va_arg(arguments, struct json_value *);
+        struct json_value* value = va_arg(arguments, struct json_value*);
         json_array_push(array, value);
     }
 
@@ -60,9 +62,9 @@ struct json_value *json_combine(size_t arguments_length, ...) {
     return object;
 }
 
-struct json_value *json_combine_array(struct json_value **values, size_t size) {
-    struct json_value *array = json_array_value();
-    struct json_value *object = json_object_value();
+struct json_value* json_combine_array(struct json_value** values, size_t size) {
+    struct json_value* array = json_array_value();
+    struct json_value* object = json_object_value();
     json_object_push(object, "srcs", array);
 
     for (size_t i = 0; i < size; i++) {
@@ -76,19 +78,19 @@ struct json_value *json_combine_array(struct json_value **values, size_t size) {
  * JSON COMPILE
  */
 
-static struct json_value *context;
+static struct json_value* context;
 
-static struct json_value *json_compile_object(struct json_value *instruction) {
-    struct json_value *properties_value = json_object_get(instruction, "properties");
+static struct json_value* json_compile_object(struct json_value* instruction) {
+    struct json_value* properties_value = json_object_get(instruction, "properties");
     assert(properties_value);
     assert(properties_value->type == JSON_OBJECT_VALUE);
 
-    struct json_object *properties = properties_value->object_value;
+    struct json_object* properties = properties_value->object_value;
 
-    struct json_value *result = json_object_value();
+    struct json_value* result = json_object_value();
 
     for (unsigned int i = 0; i < properties->size; i++) {
-        struct json_value *property = json_compile_instruction(properties->members[i]->value);
+        struct json_value* property = json_compile_instruction(properties->members[i]->value);
 
         if (property != NULL) {
             json_object_push(result, properties->members[i]->name, property);
@@ -98,12 +100,12 @@ static struct json_value *json_compile_object(struct json_value *instruction) {
     return result;
 }
 
-static struct json_value *json_compile_path(struct json_value *instruction) {
-    struct json_value *path_value = json_object_get(instruction, "path");
+static struct json_value* json_compile_path(struct json_value* instruction) {
+    struct json_value* path_value = json_object_get(instruction, "path");
     assert(path_value);
     assert(path_value->type == JSON_STRING_VALUE);
 
-    struct json_value *value = json_search(context, path_value->string_value);
+    struct json_value* value = json_search(context, path_value->string_value);
 
     if (value == NULL) {
         return NULL;
@@ -112,13 +114,13 @@ static struct json_value *json_compile_path(struct json_value *instruction) {
     value = json_clone(value);
 
     if (json_object_has(instruction, "stringify")) {
-        struct json_value *stringify_value = json_object_get(instruction, "stringify");
+        struct json_value* stringify_value = json_object_get(instruction, "stringify");
         assert(stringify_value);
         assert(stringify_value->type == JSON_BOOLEAN_VALUE);
 
         if (strcmp(stringify_value->boolean_value, "true") == 0) {
-            char *stringify = json_stringify(value);
-            char *escaped_stringify = json_escape_string(stringify);
+            char* stringify = json_stringify(value);
+            char* escaped_stringify = json_escape_string(stringify);
             value = json_string_value(escaped_stringify);
             free(escaped_stringify);
             free(stringify);
@@ -128,7 +130,7 @@ static struct json_value *json_compile_path(struct json_value *instruction) {
     return value;
 }
 
-static struct json_value *json_compile_instruction(struct json_value *instruction) {
+static struct json_value* json_compile_instruction(struct json_value* instruction) {
     assert(instruction->type == JSON_OBJECT_VALUE);
 
     if (json_object_has(instruction, "properties")) {
@@ -140,9 +142,9 @@ static struct json_value *json_compile_instruction(struct json_value *instructio
     return NULL;
 }
 
-struct json_value *json_compile(struct json_value *json_template, struct json_value *data) {
+struct json_value* json_compile(struct json_value* json_template, struct json_value* data) {
     context = data;
-    struct json_value *result = json_compile_instruction(json_template);
+    struct json_value* result = json_compile_instruction(json_template);
     context = NULL;
 
     return result;

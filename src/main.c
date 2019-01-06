@@ -23,25 +23,26 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "json.h"
 #include "json_template.h"
 
 #define SOURCE_CHUNK_SIZE 512
 
-const char *error_messages[] = {
+const char* error_messages[] = {
     "JSON_ERROR_EMPTY_FILE",
     "JSON_ERROR_UNEXPECTED_TOKEN"
 };
 
-char *read_file(const char *path);
-char *read_file(const char *path) {
-    FILE *handle = fopen(path, "r");
+char* read_file(const char* path);
+char* read_file(const char* path) {
+    FILE* handle = fopen(path, "r");
 
     if (handle == NULL) {
         return NULL;
     }
 
-    char *source = malloc(sizeof(char) * SOURCE_CHUNK_SIZE + 1);
+    char* source = malloc(sizeof(char) * SOURCE_CHUNK_SIZE + 1);
     assert(source);
 
     int length = 0;
@@ -69,57 +70,60 @@ char *read_file(const char *path) {
     return source;
 }
 
-struct json_value *parse_file(const char *path);
-struct json_value *parse_file(const char *path) {
-    char *source = read_file(path);
+struct json_value* parse_file(const char* path);
+struct json_value* parse_file(const char* path) {
+    char* source = read_file(path);
 
     if (source == NULL) {
         fprintf(stderr, "Unable to read file \"%s\"\n", path);
         exit(2);
     }
 
-    struct json_parse_result *result = json_parse(source);
+    struct json_parse_result* result = json_parse(source);
 
     if (result->error > 0) {
-        fprintf(stderr, "ERROR #%d: %s at position %d at file %s\n",
-                result->error,
-                error_messages[result->error - 1],
-                result->error_position,
-                path);
+        fprintf(
+            stderr,
+            "ERROR #%d: %s at position %d at file %s\n",
+            result->error,
+            error_messages[result->error - 1],
+            result->error_position,
+            path
+        );
         exit(3);
     }
 
-    struct json_value *value = result->value;
+    struct json_value* value = result->value;
     json_parse_result_free(result);
 
     return value;
 }
 
-int main(int argc, const char **argv) {
+int main(int argc, const char** argv) {
     if (argc < 3) {
         fprintf(stderr, "usage: json <template_file> <json_file>...\n");
         return 1;
     }
 
-    struct json_value *json_template = parse_file(argv[1]);
-    struct json_value **values = NULL;
+    struct json_value* json_template = parse_file(argv[1]);
+    struct json_value** values = NULL;
     size_t size = 0;
 
     for (int i = 2; i < argc; i++) {
-        struct json_value *value = parse_file(argv[i]);
+        struct json_value* value = parse_file(argv[i]);
 
         if (size == 0) {
-            values = malloc(sizeof(struct json_value *));
+            values = malloc(sizeof(struct json_value*));
         } else {
-            values = realloc(values, sizeof(struct json_value *) * (size + 1));
+            values = realloc(values, sizeof(struct json_value*) * (size + 1));
         }
         assert(values);
 
         values[size++] = value;
     }
 
-    struct json_value *combined = json_combine_array(values, size);
-    struct json_value *compiled = json_compile(json_template, combined);
+    struct json_value* combined = json_combine_array(values, size);
+    struct json_value* compiled = json_compile(json_template, combined);
 
     if (compiled == NULL) {
         fprintf(stderr, "Unable to compile template\n");

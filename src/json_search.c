@@ -19,17 +19,18 @@
  * THE SOFTWARE.
  */
 
-#include <string.h> /* size_t, strlen */
-#include <stdlib.h> /* atoi, abort */
-#include <stdio.h> /* fprintf */
 #include "json_search.h"
+
+#include <stdio.h> /* fprintf */
+#include <stdlib.h> /* atoi, abort */
+#include <string.h> /* size_t, strlen */
 
 /*
  * TABLE OF CONTENTS
  */
 
 static char json_search_get_next_token(void);
-struct json_value *json_search(struct json_value *root, const char *path);
+struct json_value* json_search(struct json_value* root, const char* path);
 
 /*
  * JSON SEARCH
@@ -43,7 +44,7 @@ struct json_value *json_search(struct json_value *root, const char *path);
 #define json_search_is_digit(character) \
     (character >= '0' && character <= '9')
 
-static const char *search_path;
+static const char* search_path;
 static size_t search_path_length;
 static unsigned int current_position;
 static char* property_name;
@@ -74,8 +75,12 @@ static char json_search_get_next_token() {
 
         current_position++;
 
-        char *array_index_string = malloc(sizeof(char) * (array_index_length + 1));
-        memcpy(array_index_string, search_path + current_position - array_index_length - 1, array_index_length);
+        char* array_index_string = malloc(sizeof(char) * (array_index_length + 1));
+        memcpy(
+            array_index_string,
+            search_path + current_position - array_index_length - 1,
+            array_index_length
+        );
         array_index_string[array_index_length] = '\0';
         array_index = atoi(array_index_string);
         free(array_index_string);
@@ -104,7 +109,11 @@ static char json_search_get_next_token() {
         }
 
         property_name = malloc(sizeof(char) * (property_name_length + 1));
-        memcpy(property_name, search_path + current_position - property_name_length, property_name_length);
+        memcpy(
+            property_name,
+            search_path + current_position - property_name_length,
+            property_name_length
+        );
         property_name[property_name_length] = '\0';
         return JSON_SEARCH_TOKEN_PROPERTY;
     }
@@ -112,7 +121,7 @@ static char json_search_get_next_token() {
     return JSON_SEARCH_TOKEN_UNKNOWN;
 }
 
-struct json_value *json_search(struct json_value *root, const char *path) {
+struct json_value* json_search(struct json_value* root, const char* path) {
     search_path = path;
     search_path_length = strlen(search_path);
     current_position = 0;
@@ -130,7 +139,7 @@ struct json_value *json_search(struct json_value *root, const char *path) {
                     return NULL;
                 }
 
-                struct json_value *new_root = NULL;
+                struct json_value* new_root = NULL;
 
                 for (unsigned int i = 0; i < root->object_value->size; i++) {
                     if (strcmp(root->object_value->members[i]->name, property_name) == 0) {

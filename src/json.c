@@ -19,11 +19,12 @@
  * THE SOFTWARE.
  */
 
+#include "json.h"
+
 #include <assert.h> /* assert */
 #include <stdbool.h> /* true */
-#include <string.h> /* memcpy, memcmp, strcpy, strlen */
 #include <stdlib.h> /* malloc, realloc, free */
-#include "json.h"
+#include <string.h> /* memcpy, memcmp, strcpy, strlen */
 
 /*
  * TABLE OF CONTENTS
@@ -41,43 +42,43 @@
 #define JSON_OBJECT_CHUNK_SIZE 8
 
 static void json_escape_string_append_character(char character);
-char *json_escape_string(const char *string);
+char* json_escape_string(const char* string);
 
-struct json_value *json_null_value(void);
-struct json_value *json_boolean_value(bool value);
-struct json_value *json_string_value(const char *value);
-struct json_value *json_number_value(const char *value);
-struct json_value *json_array_value(void);
-struct json_value *json_object_value(void);
-void json_array_push(struct json_value *array_value, struct json_value *value);
-void json_object_push(struct json_value *object_value, const char *name, struct json_value *value);
-bool json_object_has(struct json_value *object_value, const char *name);
-struct json_value *json_object_get(struct json_value *object_value, const char *name);
+struct json_value* json_null_value(void);
+struct json_value* json_boolean_value(bool value);
+struct json_value* json_string_value(const char* value);
+struct json_value* json_number_value(const char* value);
+struct json_value* json_array_value(void);
+struct json_value* json_object_value(void);
+void json_array_push(struct json_value* array_value, struct json_value* value);
+void json_object_push(struct json_value* object_value, const char* name, struct json_value* value);
+bool json_object_has(struct json_value* object_value, const char* name);
+struct json_value* json_object_get(struct json_value* object_value, const char* name);
 
-static struct json_value *json_clone_array(const struct json_value *source);
-static struct json_value *json_clone_object(const struct json_value *source);
-static struct json_value *json_clone_value(const struct json_value *source);
-struct json_value *json_clone(const struct json_value *source);
+static struct json_value* json_clone_array(const struct json_value* source);
+static struct json_value* json_clone_object(const struct json_value* source);
+static struct json_value* json_clone_value(const struct json_value* source);
+struct json_value* json_clone(const struct json_value* source);
 
 static int json_get_next_token(void);
-static struct json_object_member *json_parse_object_member(void);
-static struct json_object *json_parse_object(void);
-static struct json_array *json_parse_array(void);
-static struct json_value *json_parse_value(void);
-struct json_parse_result *json_parse(const char *json);
+static struct json_object_member* json_parse_object_member(void);
+static struct json_object* json_parse_object(void);
+static struct json_array* json_parse_array(void);
+static struct json_value* json_parse_value(void);
+struct json_parse_result* json_parse(const char* json);
 
 static void json_stringify_init_string(void);
 static void json_stringify_append_character(char character);
-static void json_stringify_append_string(const char *string);
-static void json_stringify_array(const struct json_array *array);
-static void json_stringify_object(const struct json_object *object);
-static void json_stringify_value(const struct json_value *value);
-char *json_stringify(const struct json_value *value);
+static void json_stringify_append_string(const char* string);
+static void json_stringify_array(const struct json_array* array);
+static void json_stringify_object(const struct json_object* object);
+static void json_stringify_value(const struct json_value* value);
+char* json_stringify(const struct json_value* value);
 
-static void json_array_free(struct json_array *array);
-static void json_object_free(struct json_object *object);
-void json_value_free(struct json_value *value);
-void json_parse_result_free(struct json_parse_result *parse_result);
+static void json_array_free(struct json_array* array);
+static void json_object_free(struct json_object* object);
+void json_value_free(struct json_value* value);
+void json_parse_result_free(struct json_parse_result* parse_result);
 
 /*
  * JSON CONSTRUCTOR
@@ -85,21 +86,24 @@ void json_parse_result_free(struct json_parse_result *parse_result);
 
 #define JSON_ESCAPE_STRING_CHUNK_SIZE 64
 
-static char *escape_result;
+static char* escape_result;
 static int escape_result_length;
 
 static void json_escape_string_append_character(char character) {
     if (escape_result_length == 0) {
         json_malloc(escape_result, sizeof(char) * (JSON_ESCAPE_STRING_CHUNK_SIZE + 1));
     } else if (escape_result_length % JSON_ESCAPE_STRING_CHUNK_SIZE == 0) {
-        json_realloc(escape_result, sizeof(char) * (escape_result_length + JSON_ESCAPE_STRING_CHUNK_SIZE + 1));
+        json_realloc(
+            escape_result,
+            sizeof(char) * (escape_result_length + JSON_ESCAPE_STRING_CHUNK_SIZE + 1)
+        );
     }
 
     escape_result[escape_result_length++] = character;
     escape_result[escape_result_length] = '\0';
 }
 
-char *json_escape_string(const char *string) {
+char* json_escape_string(const char* string) {
     size_t string_length = strlen(string);
     escape_result_length = 0;
 
@@ -116,15 +120,15 @@ char *json_escape_string(const char *string) {
     return escape_result;
 }
 
-struct json_value *json_null_value() {
-    struct json_value *null_value;
+struct json_value* json_null_value() {
+    struct json_value* null_value;
     json_malloc(null_value, sizeof(struct json_value));
     null_value->type = JSON_NULL_VALUE;
     return null_value;
 }
 
-struct json_value *json_boolean_value(bool value) {
-    struct json_value *boolean_value;
+struct json_value* json_boolean_value(bool value) {
+    struct json_value* boolean_value;
     json_malloc(boolean_value, sizeof(struct json_value));
     boolean_value->type = JSON_BOOLEAN_VALUE;
     if (value) {
@@ -135,8 +139,8 @@ struct json_value *json_boolean_value(bool value) {
     return boolean_value;
 }
 
-struct json_value *json_string_value(const char *value) {
-    struct json_value *string_value;
+struct json_value* json_string_value(const char* value) {
+    struct json_value* string_value;
     json_malloc(string_value, sizeof(struct json_value));
     string_value->type = JSON_STRING_VALUE;
     string_value->string_value = malloc(sizeof(char) * (strlen(value) + 1));
@@ -144,8 +148,8 @@ struct json_value *json_string_value(const char *value) {
     return string_value;
 }
 
-struct json_value *json_number_value(const char *value) {
-    struct json_value *number_value;
+struct json_value* json_number_value(const char* value) {
+    struct json_value* number_value;
     json_malloc(number_value, sizeof(struct json_value));
     number_value->type = JSON_NUMBER_VALUE;
     number_value->number_value = malloc(sizeof(char) * (strlen(value) + 1));
@@ -153,13 +157,13 @@ struct json_value *json_number_value(const char *value) {
     return number_value;
 }
 
-struct json_value *json_array_value() {
-    struct json_array *array;
+struct json_value* json_array_value() {
+    struct json_array* array;
     json_malloc(array, sizeof(struct json_array));
     array->size = 0;
     array->values = NULL;
 
-    struct json_value *array_value;
+    struct json_value* array_value;
     json_malloc(array_value, sizeof(struct json_value));
     array_value->type = JSON_ARRAY_VALUE;
     array_value->array_value = array;
@@ -167,13 +171,13 @@ struct json_value *json_array_value() {
     return array_value;
 }
 
-struct json_value *json_object_value() {
-    struct json_object *object;
+struct json_value* json_object_value() {
+    struct json_object* object;
     json_malloc(object, sizeof(struct json_object));
     object->size = 0;
     object->members = NULL;
 
-    struct json_value *object_value;
+    struct json_value* object_value;
     json_malloc(object_value, sizeof(struct json_value));
     object_value->type = JSON_OBJECT_VALUE;
     object_value->object_value = object;
@@ -181,41 +185,47 @@ struct json_value *json_object_value() {
     return object_value;
 }
 
-void json_array_push(struct json_value *array_value, struct json_value *value) {
+void json_array_push(struct json_value* array_value, struct json_value* value) {
     assert(array_value->type == JSON_ARRAY_VALUE);
-    struct json_array *array = array_value->array_value;
+    struct json_array* array = array_value->array_value;
 
     if (array->size == 0) {
-        json_malloc(array->values, sizeof(struct json_value *) * JSON_ARRAY_CHUNK_SIZE);
+        json_malloc(array->values, sizeof(struct json_value*) * JSON_ARRAY_CHUNK_SIZE);
     } else if (array->size % JSON_ARRAY_CHUNK_SIZE == 0) {
-        json_realloc(array->values, sizeof(struct json_value *) * (array->size + JSON_ARRAY_CHUNK_SIZE));
+        json_realloc(
+            array->values,
+            sizeof(struct json_value*) * (array->size + JSON_ARRAY_CHUNK_SIZE)
+        );
     }
 
     array->values[array->size++] = value;
 }
 
-void json_object_push(struct json_value *object_value, const char *name, struct json_value *value) {
+void json_object_push(struct json_value* object_value, const char* name, struct json_value* value) {
     assert(object_value->type == JSON_OBJECT_VALUE);
-    struct json_object *object = object_value->object_value;
+    struct json_object* object = object_value->object_value;
 
-    struct json_object_member *member;
+    struct json_object_member* member;
     json_malloc(member, sizeof(struct json_object_member));
     json_malloc(member->name, sizeof(char) * (strlen(name) + 1));
     strcpy(member->name, name);
     member->value = value;
 
     if (object->size == 0) {
-        json_malloc(object->members, sizeof(struct json_object_member *) * JSON_OBJECT_CHUNK_SIZE);
+        json_malloc(object->members, sizeof(struct json_object_member*) * JSON_OBJECT_CHUNK_SIZE);
     } else if (object->size % JSON_OBJECT_CHUNK_SIZE == 0) {
-        json_realloc(object->members, sizeof(struct json_object_member *) * (object->size + JSON_OBJECT_CHUNK_SIZE));
+        json_realloc(
+            object->members,
+            sizeof(struct json_object_member*) * (object->size + JSON_OBJECT_CHUNK_SIZE)
+        );
     }
 
     object->members[object->size++] = member;
 }
 
-bool json_object_has(struct json_value *object_value, const char *name) {
+bool json_object_has(struct json_value* object_value, const char* name) {
     assert(object_value->type == JSON_OBJECT_VALUE);
-    struct json_object *object = object_value->object_value;
+    struct json_object* object = object_value->object_value;
 
     for (unsigned int i = 0; i < object->size; i++) {
         if (strcmp(object->members[i]->name, name) == 0) {
@@ -226,9 +236,9 @@ bool json_object_has(struct json_value *object_value, const char *name) {
     return false;
 }
 
-struct json_value *json_object_get(struct json_value *object_value, const char *name) {
+struct json_value* json_object_get(struct json_value* object_value, const char* name) {
     assert(object_value->type == JSON_OBJECT_VALUE);
-    struct json_object *object = object_value->object_value;
+    struct json_object* object = object_value->object_value;
 
     for (unsigned int i = 0; i < object->size; i++) {
         if (strcmp(object->members[i]->name, name) == 0) {
@@ -243,8 +253,8 @@ struct json_value *json_object_get(struct json_value *object_value, const char *
  * JSON CLONE
  */
 
-static struct json_value *json_clone_array(const struct json_value *source) {
-    struct json_value *array_value = json_array_value();
+static struct json_value* json_clone_array(const struct json_value* source) {
+    struct json_value* array_value = json_array_value();
 
     for (unsigned int i = 0; i < source->array_value->size; i++) {
         json_array_push(array_value, json_clone_value(source->array_value->values[i]));
@@ -253,19 +263,21 @@ static struct json_value *json_clone_array(const struct json_value *source) {
     return array_value;
 }
 
-static struct json_value *json_clone_object(const struct json_value *source) {
-    struct json_value *object_value = json_object_value();
+static struct json_value* json_clone_object(const struct json_value* source) {
+    struct json_value* object_value = json_object_value();
 
     for (unsigned int i = 0; i < source->object_value->size; i++) {
-        json_object_push(object_value,
-                         source->object_value->members[i]->name,
-                         json_clone_value(source->object_value->members[i]->value));
+        json_object_push(
+            object_value,
+            source->object_value->members[i]->name,
+            json_clone_value(source->object_value->members[i]->value)
+        );
     }
 
     return object_value;
 }
 
-static struct json_value *json_clone_value(const struct json_value *source) {
+static struct json_value* json_clone_value(const struct json_value* source) {
     switch (source->type) {
         case JSON_NULL_VALUE:
             return json_null_value();
@@ -287,7 +299,7 @@ static struct json_value *json_clone_value(const struct json_value *source) {
     }
 }
 
-struct json_value *json_clone(const struct json_value *source) {
+struct json_value* json_clone(const struct json_value* source) {
     return json_clone_value(source);
 }
 
@@ -315,13 +327,13 @@ struct json_value *json_clone(const struct json_value *source) {
 #define json_is_digit(character) \
     (character >= '0' && character <= '9')
 
-static const char *source;
+static const char* source;
 static size_t source_length;
 static unsigned int last_error;
 static unsigned int last_error_position;
 static unsigned int current_position;
 static unsigned int next_token;
-static char *token_value = NULL;
+static char* token_value = NULL;
 static unsigned int token_value_length;
 
 static int json_get_next_token() {
@@ -354,7 +366,11 @@ static int json_get_next_token() {
             while (current_position < source_length) {
                 if (current_character == '"' && source[current_position - 1] != '\\') {
                     json_malloc(token_value, sizeof(char) * (token_value_length + 1));
-                    memcpy(token_value, source + current_position - token_value_length, token_value_length);
+                    memcpy(
+                        token_value,
+                        source + current_position - token_value_length,
+                        token_value_length
+                    );
                     token_value[token_value_length] = '\0';
                     current_position++;
                     return JSON_TOKEN_STRING;
@@ -365,7 +381,8 @@ static int json_get_next_token() {
             break;
 
         case JSON_TOKEN_FALSE:
-            if (source_length - current_position >= 5 && memcmp(source + current_position, "false", 5) == 0) {
+            if (source_length - current_position >= 5
+                && memcmp(source + current_position, "false", 5) == 0) {
                 current_position += 5;
                 token_value = "false";
                 return JSON_TOKEN_FALSE;
@@ -373,7 +390,8 @@ static int json_get_next_token() {
             break;
 
         case JSON_TOKEN_TRUE:
-            if (source_length - current_position >= 4 && memcmp(source + current_position, "true", 4) == 0) {
+            if (source_length - current_position >= 4
+                && memcmp(source + current_position, "true", 4) == 0) {
                 current_position += 4;
                 token_value = "true";
                 return JSON_TOKEN_TRUE;
@@ -381,7 +399,8 @@ static int json_get_next_token() {
             break;
 
         case JSON_TOKEN_NULL:
-            if (source_length - current_position >= 4 && memcmp(source + current_position, "null", 4) == 0) {
+            if (source_length - current_position >= 4
+                && memcmp(source + current_position, "null", 4) == 0) {
                 current_position += 4;
                 return JSON_TOKEN_NULL;
             }
@@ -449,14 +468,14 @@ invalid_number:
     return JSON_TOKEN_UNKNOWN;
 }
 
-static struct json_object_member *json_parse_object_member() {
+static struct json_object_member* json_parse_object_member() {
     if (next_token != JSON_TOKEN_STRING) {
         last_error = JSON_ERROR_UNEXPECTED_TOKEN;
         last_error_position = current_position - token_value_length;
         return NULL;
     }
 
-    char *name = token_value;
+    char* name = token_value;
     token_value = NULL;
     next_token = json_get_next_token();
 
@@ -468,22 +487,22 @@ static struct json_object_member *json_parse_object_member() {
     }
 
     next_token = json_get_next_token();
-    struct json_value *value = json_parse_value();
+    struct json_value* value = json_parse_value();
 
     if (value == NULL) {
         free(name);
         return NULL;
     }
 
-    struct json_object_member *member;
+    struct json_object_member* member;
     json_malloc(member, sizeof(struct json_object_member));
     member->name = name;
     member->value = value;
     return member;
 }
 
-static struct json_object *json_parse_object() {
-    struct json_object *object;
+static struct json_object* json_parse_object() {
+    struct json_object* object;
 
     next_token = json_get_next_token();
 
@@ -497,7 +516,7 @@ static struct json_object *json_parse_object() {
     }
 
     while (true) {
-        struct json_object_member *member = json_parse_object_member();
+        struct json_object_member* member = json_parse_object_member();
 
         if (member == NULL) {
             json_object_free(object);
@@ -505,9 +524,15 @@ static struct json_object *json_parse_object() {
         }
 
         if (object->size == 0) {
-            json_malloc(object->members, sizeof(struct json_object_member *) * JSON_OBJECT_CHUNK_SIZE);
+            json_malloc(
+                object->members,
+                sizeof(struct json_object_member*) * JSON_OBJECT_CHUNK_SIZE
+            );
         } else if (object->size % JSON_OBJECT_CHUNK_SIZE == 0) {
-            json_realloc(object->members, sizeof(struct json_object_member *) * (object->size + JSON_OBJECT_CHUNK_SIZE));
+            json_realloc(
+                object->members,
+                sizeof(struct json_object_member*) * (object->size + JSON_OBJECT_CHUNK_SIZE)
+            );
         }
 
         object->members[object->size++] = member;
@@ -531,10 +556,10 @@ static struct json_object *json_parse_object() {
     return object;
 }
 
-static struct json_array *json_parse_array() {
+static struct json_array* json_parse_array() {
     next_token = json_get_next_token();
 
-    struct json_array *array;
+    struct json_array* array;
     json_malloc(array, sizeof(struct json_array));
     array->size = 0;
 
@@ -545,7 +570,7 @@ static struct json_array *json_parse_array() {
     }
 
     while (true) {
-        struct json_value *value = json_parse_value();
+        struct json_value* value = json_parse_value();
 
         if (value == NULL) {
             json_array_free(array);
@@ -553,9 +578,12 @@ static struct json_array *json_parse_array() {
         }
 
         if (array->size == 0) {
-            json_malloc(array->values, sizeof(struct json_value *) * JSON_ARRAY_CHUNK_SIZE);
+            json_malloc(array->values, sizeof(struct json_value*) * JSON_ARRAY_CHUNK_SIZE);
         } else if (array->size % JSON_ARRAY_CHUNK_SIZE == 0) {
-            json_realloc(array->values, sizeof(struct json_value *) * (array->size + JSON_ARRAY_CHUNK_SIZE));
+            json_realloc(
+                array->values,
+                sizeof(struct json_value*) * (array->size + JSON_ARRAY_CHUNK_SIZE)
+            );
         }
 
         array->values[array->size++] = value;
@@ -588,16 +616,16 @@ static struct json_array *json_parse_array() {
         next_token = json_get_next_token(); \
         return value;
 
-static struct json_value *json_parse_value() {
-    struct json_value *value;
-    struct json_object *object;
-    struct json_array *array;
+static struct json_value* json_parse_value() {
+    struct json_value* value;
+    struct json_object* object;
+    struct json_array* array;
 
     switch (next_token) {
-        json_parse_value_case_value(JSON_TOKEN_STRING, JSON_STRING_VALUE, string_value)
-        json_parse_value_case_value(JSON_TOKEN_NUMBER, JSON_NUMBER_VALUE, number_value)
-        json_parse_value_case_value(JSON_TOKEN_FALSE, JSON_BOOLEAN_VALUE, boolean_value)
-        json_parse_value_case_value(JSON_TOKEN_TRUE, JSON_BOOLEAN_VALUE, boolean_value)
+        json_parse_value_case_value(JSON_TOKEN_STRING, JSON_STRING_VALUE, string_value);
+        json_parse_value_case_value(JSON_TOKEN_NUMBER, JSON_NUMBER_VALUE, number_value);
+        json_parse_value_case_value(JSON_TOKEN_FALSE, JSON_BOOLEAN_VALUE, boolean_value);
+        json_parse_value_case_value(JSON_TOKEN_TRUE, JSON_BOOLEAN_VALUE, boolean_value);
 
         case JSON_TOKEN_NULL:
             json_malloc(value, sizeof(struct json_value));
@@ -633,8 +661,8 @@ static struct json_value *json_parse_value() {
     }
 }
 
-struct json_parse_result *json_parse(const char *json) {
-    struct json_parse_result *result;
+struct json_parse_result* json_parse(const char* json) {
+    struct json_parse_result* result;
     json_malloc(result, sizeof(struct json_parse_result));
 
     source = json;
@@ -674,7 +702,7 @@ struct json_parse_result *json_parse(const char *json) {
 
 #define JSON_STRINGIFY_CHUNK_SIZE 64
 
-static char *stringify_result = NULL;
+static char* stringify_result = NULL;
 static size_t stringify_result_length;
 static size_t result_allocated_chunks;
 
@@ -687,7 +715,10 @@ static void json_stringify_init_string() {
 
 static void json_stringify_append_character(char character) {
     if (stringify_result_length > 0 && stringify_result_length % JSON_STRINGIFY_CHUNK_SIZE == 0) {
-        json_realloc(stringify_result, sizeof(char) * (stringify_result_length + JSON_STRINGIFY_CHUNK_SIZE + 1));
+        json_realloc(
+            stringify_result,
+            sizeof(char) * (stringify_result_length + JSON_STRINGIFY_CHUNK_SIZE + 1)
+        );
         result_allocated_chunks++;
     }
 
@@ -695,14 +726,17 @@ static void json_stringify_append_character(char character) {
     stringify_result[stringify_result_length] = '\0';
 }
 
-static void json_stringify_append_string(const char *string) {
+static void json_stringify_append_string(const char* string) {
     size_t string_length = strlen(string);
     size_t allocated_length = result_allocated_chunks * JSON_STRINGIFY_CHUNK_SIZE;
     size_t new_string_length = stringify_result_length + string_length;
 
     if (new_string_length > allocated_length) {
         size_t new_string_chunks = new_string_length / JSON_STRINGIFY_CHUNK_SIZE + 1;
-        json_realloc(stringify_result, sizeof(char) * (JSON_STRINGIFY_CHUNK_SIZE * new_string_chunks));
+        json_realloc(
+            stringify_result,
+            sizeof(char) * (JSON_STRINGIFY_CHUNK_SIZE * new_string_chunks)
+        );
         result_allocated_chunks = new_string_chunks;
     }
 
@@ -711,7 +745,7 @@ static void json_stringify_append_string(const char *string) {
     stringify_result[new_string_length] = '\0';
 }
 
-static void json_stringify_array(const struct json_array *array) {
+static void json_stringify_array(const struct json_array* array) {
     json_stringify_append_character('[');
 
     for (unsigned int i = 0; i < array->size; i++) {
@@ -725,7 +759,7 @@ static void json_stringify_array(const struct json_array *array) {
     json_stringify_append_character(']');
 }
 
-static void json_stringify_object(const struct json_object *object) {
+static void json_stringify_object(const struct json_object* object) {
     json_stringify_append_character('{');
 
     for (unsigned int i = 0; i < object->size; i++) {
@@ -743,7 +777,7 @@ static void json_stringify_object(const struct json_object *object) {
     json_stringify_append_character('}');
 }
 
-static void json_stringify_value(const struct json_value *value) {
+static void json_stringify_value(const struct json_value* value) {
     switch (value->type) {
         case JSON_NULL_VALUE:
             json_stringify_append_string("null");
@@ -773,12 +807,12 @@ static void json_stringify_value(const struct json_value *value) {
     }
 }
 
-char *json_stringify(const struct json_value *value) {
+char* json_stringify(const struct json_value* value) {
     json_stringify_init_string();
 
     json_stringify_value(value);
 
-    char *result = stringify_result;
+    char* result = stringify_result;
     stringify_result = NULL;
 
     return result;
@@ -788,7 +822,7 @@ char *json_stringify(const struct json_value *value) {
  * FREE FUNCTIONS
  */
 
-static void json_array_free(struct json_array *array) {
+static void json_array_free(struct json_array* array) {
     if (array->size > 0) {
         for (unsigned int i = 0; i < array->size; i++) {
             json_value_free(array->values[i]);
@@ -800,7 +834,7 @@ static void json_array_free(struct json_array *array) {
     free(array);
 }
 
-static void json_object_free(struct json_object *object) {
+static void json_object_free(struct json_object* object) {
     if (object->size > 0) {
         for (unsigned int i = 0; i < object->size; i++) {
             free(object->members[i]->name);
@@ -814,7 +848,7 @@ static void json_object_free(struct json_object *object) {
     free(object);
 }
 
-void json_value_free(struct json_value *value) {
+void json_value_free(struct json_value* value) {
     switch (value->type) {
         case JSON_NULL_VALUE:
         case JSON_BOOLEAN_VALUE:
@@ -840,6 +874,6 @@ void json_value_free(struct json_value *value) {
     free(value);
 }
 
-void json_parse_result_free(struct json_parse_result *parse_result) {
+void json_parse_result_free(struct json_parse_result* parse_result) {
     free(parse_result);
 }

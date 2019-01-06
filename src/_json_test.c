@@ -19,8 +19,9 @@
  * THE SOFTWARE.
  */
 
-#include <vstd/test.h>
 #include <string.h>
+#include <vstd/test.h>
+
 #include "json.h"
 
 #define assert_successful_parsing(source_json) \
@@ -43,49 +44,49 @@
     assert(parse_result->error_position == _error_position); \
     json_parse_result_free(parse_result);
 
-static struct json_parse_result *parse_result;
-static char *stringify_result;
+static struct json_parse_result* parse_result;
+static char* stringify_result;
 
 static void vstd_setup() {}
 
 static void vstd_teardown() {}
 
 vstd_test_unit(json, 100000, {
-    assert_successful_parsing("null")
-    assert_successful_parsing("true")
-    assert_successful_parsing("false")
-    assert_successful_parsing("1")
-    assert_successful_parsing("1.0")
-    assert_successful_parsing("-1.0")
-    assert_successful_parsing("-1.0e-1")
-    assert_successful_parsing("-1.0e+2")
-    assert_successful_parsing("-1.0E3")
-    assert_successful_parsing("\"string\"")
-    assert_successful_parsing("\"string with \\\" escaped quote\"")
-    assert_successful_parsing("\"UTF-8 строка\"")
-    assert_successful_parsing("[null,true,false,1,\"string\"]")
-    assert_successful_parsing("{\"array\":[null,true,false,1,\"string\"]}")
-    assert_successful_parsing("[[],[]]")
-    assert_successful_parsing("{\"a\":1,\"b\":2}")
-    assert_successful_parsing("{\"a\":{},\"b\":{}}")
+    assert_successful_parsing("null");
+    assert_successful_parsing("true");
+    assert_successful_parsing("false");
+    assert_successful_parsing("1");
+    assert_successful_parsing("1.0");
+    assert_successful_parsing("-1.0");
+    assert_successful_parsing("-1.0e-1");
+    assert_successful_parsing("-1.0e+2");
+    assert_successful_parsing("-1.0E3");
+    assert_successful_parsing("\"string\"");
+    assert_successful_parsing("\"string with \\\" escaped quote\"");
+    assert_successful_parsing("\"UTF-8 строка\"");
+    assert_successful_parsing("[null,true,false,1,\"string\"]");
+    assert_successful_parsing("{\"array\":[null,true,false,1,\"string\"]}");
+    assert_successful_parsing("[[],[]]");
+    assert_successful_parsing("{\"a\":1,\"b\":2}");
+    assert_successful_parsing("{\"a\":{},\"b\":{}}");
 
-    assert_failed_parsing("", JSON_ERROR_EMPTY_FILE, 0)
-    assert_failed_parsing("string without quotes", JSON_ERROR_UNEXPECTED_TOKEN, 0)
-    assert_failed_parsing("[1", JSON_ERROR_UNEXPECTED_TOKEN, 2)
-    assert_failed_parsing("{1}", JSON_ERROR_UNEXPECTED_TOKEN, 1)
-    assert_failed_parsing("{", JSON_ERROR_UNEXPECTED_TOKEN, 1)
-    assert_failed_parsing("{\"a\": 1", JSON_ERROR_UNEXPECTED_TOKEN, 7)
-    assert_failed_parsing("{\"a\" 1}", JSON_ERROR_UNEXPECTED_TOKEN, 5)
+    assert_failed_parsing("", JSON_ERROR_EMPTY_FILE, 0);
+    assert_failed_parsing("string without quotes", JSON_ERROR_UNEXPECTED_TOKEN, 0);
+    assert_failed_parsing("[1", JSON_ERROR_UNEXPECTED_TOKEN, 2);
+    assert_failed_parsing("{1}", JSON_ERROR_UNEXPECTED_TOKEN, 1);
+    assert_failed_parsing("{", JSON_ERROR_UNEXPECTED_TOKEN, 1);
+    assert_failed_parsing("{\"a\": 1", JSON_ERROR_UNEXPECTED_TOKEN, 7);
+    assert_failed_parsing("{\"a\" 1}", JSON_ERROR_UNEXPECTED_TOKEN, 5);
 })
 
 /*
  * 600 000 times per 1 second
  */
 vstd_test_benchmark(json_parse_benchmark, 1.0, {
-    char *source = "{\"array\":[null,true,false,-1.0e-2,\"string\"]}";
+    char* source = "{\"array\":[null,true,false,-1.0e-2,\"string\"]}";
 
     for (int i = 0; i < 600000; i++) {
-        struct json_parse_result *result = json_parse(source);
+        struct json_parse_result* result = json_parse(source);
         json_value_free(result->value);
         json_parse_result_free(result);
     }
@@ -95,11 +96,11 @@ vstd_test_benchmark(json_parse_benchmark, 1.0, {
  * 7 500 000 times per 1 second
  */
 vstd_test_benchmark(json_stringify_benchmark, 1.0, {
-    char *source = "{\"array\":[null,true,false,-1.0e-2,\"string\"]}";
-    struct json_parse_result *result = json_parse(source);
+    char* source = "{\"array\":[null,true,false,-1.0e-2,\"string\"]}";
+    struct json_parse_result* result = json_parse(source);
 
     for (int i = 0; i < 7500000; i++) {
-        char *stringified = json_stringify(result->value);
+        char* stringified = json_stringify(result->value);
         free(stringified);
     }
 
