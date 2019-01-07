@@ -401,6 +401,10 @@ struct json_value* json_clone(const struct json_value* source) {
 #define json_is_digit(character) \
     (character >= '0' && character <= '9')
 
+#define json_is_utf_escape(character) \
+    ((character >= '0' && character <= '9') || (character >= 'a' && character <= 'f') \
+    || (character >= 'A' && character <= 'F'))
+
 static const char* source;
 static size_t source_length;
 static unsigned int last_error;
@@ -442,7 +446,60 @@ static int json_get_next_token() {
             current_character = source[++current_position];
 
             while (current_position < source_length) {
-                if (current_character == '"' && source[current_position - 1] != '\\') {
+                if (current_character == '\n' || current_character == '\t' || current_character == '\0') {
+                    goto invalid_number;
+                }
+
+                if (current_character == '\\') {
+                    if (source_length - current_position < 2) {
+                        goto invalid_number;
+                    }
+
+                    current_character = source[++current_position];
+
+                    switch (current_character) {
+                        case '"':
+                        case '/':
+                        case '\\':
+                        case 'b':
+                        case 'f':
+                        case 'n':
+                        case 'r':
+                        case 't':
+                            current_character = source[++current_position];
+                            token_value_length += 2;
+                            continue;
+
+                        case 'u':
+                            if (source_length - current_position < 5) {
+                                goto invalid_number;
+                            }
+                            current_character = source[++current_position];
+                            if (!json_is_utf_escape(current_character)) {
+                                goto invalid_number;
+                            }
+                            current_character = source[++current_position];
+                            if (!json_is_utf_escape(current_character)) {
+                                goto invalid_number;
+                            }
+                            current_character = source[++current_position];
+                            if (!json_is_utf_escape(current_character)) {
+                                goto invalid_number;
+                            }
+                            current_character = source[++current_position];
+                            if (!json_is_utf_escape(current_character)) {
+                                goto invalid_number;
+                            }
+                            current_character = source[++current_position];
+                            token_value_length += 6;
+                            continue;
+
+                        default:
+                            goto invalid_number;
+                    }
+                }
+
+                if (current_character == '"') {
                     json_malloc(token_value, sizeof(char) * (token_value_length + 1));
                     memcpy(
                         token_value,
@@ -453,6 +510,7 @@ static int json_get_next_token() {
                     current_position++;
                     return JSON_TOKEN_STRING;
                 }
+
                 current_character = source[++current_position];
                 token_value_length++;
             }
