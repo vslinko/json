@@ -61,3 +61,17 @@ target_compile_options(
   PRIVATE -Wstrict-prototypes
   PRIVATE -Wold-style-definition
 )
+
+add_executable(
+  json-parser-benchmark
+  json_parser_benchmark.c
+  vendor/json-parser/json.c
+)
+target_link_libraries(
+  json-parser-benchmark
+  ${VSTD_LIB}
+)
+target_compile_options(
+  json-parser-benchmark
+  PRIVATE -O2
+)
