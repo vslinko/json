@@ -25,7 +25,7 @@
 #include "json_search.h"
 
 #define assert_successfull_search(source, path, result) \
-    parse_result = json_parse(source); \
+    parse_result = json_parse(source, strlen(source)); \
     assert(parse_result); \
     assert(parse_result->error == 0); \
     found = json_search(parse_result->value, path); \
@@ -37,7 +37,7 @@
     json_parse_result_free(parse_result);
 
 #define assert_empty_search(source, path) \
-    parse_result = json_parse(source); \
+    parse_result = json_parse(source, strlen(source)); \
     assert(parse_result); \
     assert(parse_result->error == 0); \
     found = json_search(parse_result->value, path); \
@@ -46,7 +46,7 @@
     json_parse_result_free(parse_result);
 
 #define assert_failed_search(source, path) \
-    parse_result = json_parse(source); \
+    parse_result = json_parse(source, strlen(source)); \
     assert(parse_result); \
     assert(parse_result->error == 0); \
     json_search(parse_result->value, path);

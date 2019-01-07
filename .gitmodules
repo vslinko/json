@@ -1,3 +1,6 @@
 [submodule "vendor/vstd"]
 	path = vendor/vstd
 	url = https://github.com/vslinko/vstd.git
+[submodule "vendor/JSONTestSuit"]
+	path = vendor/JSONTestSuit
+	url = https://github.com/nst/JSONTestSuite.git

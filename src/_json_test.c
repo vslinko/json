@@ -25,7 +25,7 @@
 #include "json.h"
 
 #define assert_successful_parsing(source_json) \
-    parse_result = json_parse(source_json); \
+    parse_result = json_parse(source_json, strlen(source_json)); \
     assert(parse_result != NULL); \
     assert(parse_result->error == 0); \
     assert(parse_result->value != NULL); \
@@ -36,7 +36,7 @@
     free(stringify_result);
 
 #define assert_failed_parsing(source_json, _error, _error_position) \
-    parse_result = json_parse(source_json); \
+    parse_result = json_parse(source_json, strlen(source_json)); \
     assert(parse_result != NULL); \
     assert(parse_result->error > 0); \
     assert(parse_result->value == NULL); \
@@ -94,7 +94,7 @@ vstd_test_benchmark(json_parse_benchmark, 1.0, {
     links = malloc(sizeof(struct json_parse_result*) * PARSE_BENCHMARK_TRIES);
 }, {
     for (int i = 0; i < PARSE_BENCHMARK_TRIES; i++) {
-        struct json_parse_result* result = json_parse(sources[i]);
+        struct json_parse_result* result = json_parse(sources[i], strlen(sources[i]));
         links[i] = result;
     }
 }, {
@@ -110,7 +110,7 @@ vstd_test_benchmark(json_parse_benchmark, 1.0, {
  */
 vstd_test_benchmark(json_stringify_benchmark, 1.0, {}, {
     char* source = "{\"array\":[null,true,false,-1.0e-2,\"string\"]}";
-    struct json_parse_result* result = json_parse(source);
+    struct json_parse_result* result = json_parse(source, strlen(source));
 
     for (int i = 0; i < 7500000; i++) {
         char* stringified = json_stringify(result->value);

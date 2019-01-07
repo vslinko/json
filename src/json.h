@@ -86,7 +86,7 @@ struct json_value* json_object_get(struct json_value* object_value, const char* 
 
 struct json_value* json_clone(const struct json_value* source);
 
-struct json_parse_result* json_parse(const char* json);
+struct json_parse_result* json_parse(const char* json, unsigned int length);
 
 char* json_stringify(const struct json_value* value);
 

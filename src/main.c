@@ -34,18 +34,18 @@ const char* error_messages[] = {
     "JSON_ERROR_UNEXPECTED_TOKEN"
 };
 
-char* read_file(const char* path);
-char* read_file(const char* path) {
+unsigned int read_file(const char* path, char** _source);
+unsigned int read_file(const char* path, char** _source) {
     FILE* handle = fopen(path, "r");
 
     if (handle == NULL) {
-        return NULL;
+        return -1;
     }
-
+    
     char* source = malloc(sizeof(char) * SOURCE_CHUNK_SIZE + 1);
     assert(source);
 
-    int length = 0;
+    unsigned int length = 0;
 
     source[length] = '\0';
 
@@ -67,19 +67,22 @@ char* read_file(const char* path) {
 
     fclose(handle);
 
-    return source;
+    *_source = source;
+
+    return length;
 }
 
 struct json_value* parse_file(const char* path);
 struct json_value* parse_file(const char* path) {
-    char* source = read_file(path);
+    char* source = NULL;
+    unsigned int length = read_file(path, &source);
 
-    if (source == NULL) {
+    if (length < 0) {
         fprintf(stderr, "Unable to read file \"%s\"\n", path);
         exit(2);
     }
 
-    struct json_parse_result* result = json_parse(source);
+    struct json_parse_result* result = json_parse(source, length);
 
     if (result->error > 0) {
         fprintf(
@@ -90,7 +93,7 @@ struct json_value* parse_file(const char* path) {
             result->error_position,
             path
         );
-        exit(3);
+        exit(1);
     }
 
     struct json_value* value = result->value;
@@ -102,7 +105,7 @@ struct json_value* parse_file(const char* path) {
 int main(int argc, const char** argv) {
     if (argc < 2) {
         fprintf(stderr, "usage: json <json_file> [search_path]\n");
-        return 1;
+        return 2;
     }
 
     struct json_value* json_value = parse_file(argv[1]);
@@ -112,7 +115,7 @@ int main(int argc, const char** argv) {
 
         if (!json_value) {
             fprintf(stderr, "Unable to find %s\n", argv[2]);
-            return 1;
+            return 2;
         }
     }
 

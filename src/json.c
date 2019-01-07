@@ -1,6 +1,6 @@
 /* Copyright (c) 2014 Vyacheslav Slinko
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, json_free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -39,6 +39,10 @@
     pointer = realloc(pointer, size); \
     assert(pointer);
 
+#define json_free(pointer) \
+    /*printf("free %s:%d\n", __FILE__, __LINE__);*/ \
+    free(pointer);
+
 #define JSON_ARRAY_CHUNK_SIZE 8
 #define JSON_OBJECT_CHUNK_SIZE 8
 
@@ -66,7 +70,7 @@ static struct json_object_member* json_parse_object_member(void);
 static struct json_object* json_parse_object(void);
 static struct json_array* json_parse_array(void);
 static struct json_value* json_parse_value(void);
-struct json_parse_result* json_parse(const char* json);
+struct json_parse_result* json_parse(const char* json, unsigned int length);
 
 static void json_stringify_init_string(void);
 static void json_stringify_append_character(char character);
@@ -89,6 +93,9 @@ void json_parse_result_free(struct json_parse_result* parse_result);
 
 static char* escape_result;
 static int escape_result_length;
+
+static char true_value[5] = "true";
+static char false_value[6] = "false";
 
 static struct vstd_object_pool* json_value_pool;
 static struct vstd_object_pool* json_array_pool;
@@ -199,9 +206,9 @@ struct json_value* json_boolean_value(bool value) {
     struct json_value* boolean_value = json_value_alloc();
     boolean_value->type = JSON_BOOLEAN_VALUE;
     if (value) {
-        boolean_value->boolean_value = "true";
+        boolean_value->boolean_value = true_value;
     } else {
-        boolean_value->boolean_value = "false";
+        boolean_value->boolean_value = false_value;
     }
     return boolean_value;
 }
@@ -209,7 +216,7 @@ struct json_value* json_boolean_value(bool value) {
 struct json_value* json_string_value(const char* value) {
     struct json_value* string_value = json_value_alloc();
     string_value->type = JSON_STRING_VALUE;
-    string_value->string_value = malloc(sizeof(char) * (strlen(value) + 1));
+    json_malloc(string_value->string_value, sizeof(char) * (strlen(value) + 1));
     strcpy(string_value->string_value, value);
     return string_value;
 }
@@ -217,7 +224,7 @@ struct json_value* json_string_value(const char* value) {
 struct json_value* json_number_value(const char* value) {
     struct json_value* number_value = json_value_alloc();
     number_value->type = JSON_NUMBER_VALUE;
-    number_value->number_value = malloc(sizeof(char) * (strlen(value) + 1));
+    json_malloc(number_value->number_value, sizeof(char) * (strlen(value) + 1));
     strcpy(number_value->number_value, value);
     return number_value;
 }
@@ -417,6 +424,10 @@ static int json_get_next_token() {
         current_character = source[++current_position];
     }
 
+    if (current_position >= source_length) {
+        return JSON_TOKEN_EOF;
+    }
+
     switch (current_character) {
         case JSON_TOKEN_BEGIN_ARRAY:
         case JSON_TOKEN_BEGIN_OBJECT:
@@ -451,7 +462,7 @@ static int json_get_next_token() {
             if (source_length - current_position >= 5
                 && memcmp(source + current_position, "false", 5) == 0) {
                 current_position += 5;
-                token_value = "false";
+                token_value = false_value;
                 return JSON_TOKEN_FALSE;
             }
             break;
@@ -460,7 +471,7 @@ static int json_get_next_token() {
             if (source_length - current_position >= 4
                 && memcmp(source + current_position, "true", 4) == 0) {
                 current_position += 4;
-                token_value = "true";
+                token_value = true_value;
                 return JSON_TOKEN_TRUE;
             }
             break;
@@ -549,7 +560,7 @@ static struct json_object_member* json_parse_object_member() {
     if (next_token != JSON_TOKEN_NAME_SEPARATOR) {
         last_error = JSON_ERROR_UNEXPECTED_TOKEN;
         last_error_position = current_position - token_value_length;
-        free(name);
+        json_free(name);
         return NULL;
     }
 
@@ -557,7 +568,7 @@ static struct json_object_member* json_parse_object_member() {
     struct json_value* value = json_parse_value();
 
     if (value == NULL) {
-        free(name);
+        json_free(name);
         return NULL;
     }
 
@@ -705,11 +716,28 @@ static struct json_value* json_parse_value() {
     }
 }
 
-struct json_parse_result* json_parse(const char* json) {
+static struct json_value* json_parse_file() {
+    struct json_value* value = json_parse_value();
+
+    if (!value) {
+        return NULL;
+    }
+
+    if (next_token != JSON_TOKEN_EOF) {
+        json_value_free(value);
+        last_error = JSON_ERROR_UNEXPECTED_TOKEN;
+        last_error_position = current_position;
+        return NULL;
+    }
+
+    return value;
+}
+
+struct json_parse_result* json_parse(const char* json, unsigned int length) {
     struct json_parse_result* result = json_parse_result_alloc();
 
     source = json;
-    source_length = strlen(json);
+    source_length = length;
 
     if (source_length == 0) {
         result->error = JSON_ERROR_EMPTY_FILE;
@@ -723,14 +751,14 @@ struct json_parse_result* json_parse(const char* json) {
     current_position = 0;
     next_token = json_get_next_token();
 
-    result->value = json_parse_value();
+    result->value = json_parse_file();
 
     if (last_error > 0) {
         result->error = last_error;
         result->error_position = last_error_position;
 
-        if (token_value != NULL) {
-            free(token_value);
+        if (token_value != NULL && token_value != false_value && token_value != true_value) {
+            json_free(token_value);
         }
     } else {
         result->error = result->error_position = 0;
@@ -871,7 +899,7 @@ static void json_array_free(struct json_array* array) {
             json_value_free(array->values[i]);
         }
 
-        free(array->values);
+        json_free(array->values);
     }
 
     vstd_object_pool_return(json_array_pool, array);
@@ -880,12 +908,12 @@ static void json_array_free(struct json_array* array) {
 static void json_object_free(struct json_object* object) {
     if (object->size > 0) {
         for (unsigned int i = 0; i < object->size; i++) {
-            free(object->members[i]->name);
+            json_free(object->members[i]->name);
             json_value_free(object->members[i]->value);
             vstd_object_pool_return(json_object_member_pool, object->members[i]);
         }
 
-        free(object->members);
+        json_free(object->members);
     }
 
     vstd_object_pool_return(json_object_pool, object);
@@ -898,11 +926,11 @@ void json_value_free(struct json_value* value) {
             break;
 
         case JSON_NUMBER_VALUE:
-            free(value->number_value);
+            json_free(value->number_value);
             break;
 
         case JSON_STRING_VALUE:
-            free(value->string_value);
+            json_free(value->string_value);
             break;
 
         case JSON_ARRAY_VALUE:
