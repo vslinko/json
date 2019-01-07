@@ -1,12 +1,24 @@
 cmake_minimum_required(VERSION 3.13)
+
 include_directories(src)
 include_directories(vendor/vstd/src)
+
+find_library(
+  VSTD_LIB
+  NAMES vstd libvstd
+  HINTS ${CMAKE_SOURCE_DIR}/vendor/vstd
+  NO_DEFAULT_PATH
+)
+
 add_executable(
   json
-  vendor/vstd/src/vstd/object_pool.c
   src/main.c
   src/json.c
   src/json_search.c
+)
+target_link_libraries(
+  json
+  ${VSTD_LIB}
 )
 target_compile_options(
   json
@@ -22,15 +34,18 @@ target_compile_options(
   PRIVATE -Wstrict-prototypes
   PRIVATE -Wold-style-definition
 )
+
 add_executable(
   json-test
-  vendor/vstd/src/vstd/object_pool.c
-  vendor/vstd/src/vstd/test_runner.c
-  vendor/vstd/src/vstd/test.c
+  src/main_test.c
   src/_json_test.c
   src/json.c
   src/_json_search_test.c
   src/json_search.c
+)
+target_link_libraries(
+  json-test
+  ${VSTD_LIB}
 )
 target_compile_options(
   json-test
