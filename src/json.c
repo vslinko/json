@@ -447,12 +447,12 @@ static int json_get_next_token() {
 
             while (current_position < source_length) {
                 if (current_character == '\n' || current_character == '\t' || current_character == '\0') {
-                    goto invalid_number;
+                    return JSON_TOKEN_UNKNOWN;
                 }
 
                 if (current_character == '\\') {
                     if (source_length - current_position < 2) {
-                        goto invalid_number;
+                        return JSON_TOKEN_UNKNOWN;
                     }
 
                     current_character = source[++current_position];
@@ -472,30 +472,30 @@ static int json_get_next_token() {
 
                         case 'u':
                             if (source_length - current_position < 5) {
-                                goto invalid_number;
+                                return JSON_TOKEN_UNKNOWN;
                             }
                             current_character = source[++current_position];
                             if (!json_is_utf_escape(current_character)) {
-                                goto invalid_number;
+                                return JSON_TOKEN_UNKNOWN;
                             }
                             current_character = source[++current_position];
                             if (!json_is_utf_escape(current_character)) {
-                                goto invalid_number;
+                                return JSON_TOKEN_UNKNOWN;
                             }
                             current_character = source[++current_position];
                             if (!json_is_utf_escape(current_character)) {
-                                goto invalid_number;
+                                return JSON_TOKEN_UNKNOWN;
                             }
                             current_character = source[++current_position];
                             if (!json_is_utf_escape(current_character)) {
-                                goto invalid_number;
+                                return JSON_TOKEN_UNKNOWN;
                             }
                             current_character = source[++current_position];
                             token_value_length += 6;
                             continue;
 
                         default:
-                            goto invalid_number;
+                            return JSON_TOKEN_UNKNOWN;
                     }
                 }
 
@@ -558,7 +558,7 @@ static int json_get_next_token() {
                 token_value_length++;
             }
         } else {
-            goto invalid_number;
+            return JSON_TOKEN_UNKNOWN;
         }
 
         if (current_character == '.') {
@@ -566,7 +566,7 @@ static int json_get_next_token() {
             token_value_length++;
 
             if (!json_is_digit(current_character)) {
-                goto invalid_number;
+                return JSON_TOKEN_UNKNOWN;
             }
 
             while (json_is_digit(current_character)) {
@@ -585,7 +585,7 @@ static int json_get_next_token() {
             }
 
             if (!json_is_digit(current_character)) {
-                goto invalid_number;
+                return JSON_TOKEN_UNKNOWN;
             }
 
             while (json_is_digit(current_character)) {
@@ -599,7 +599,6 @@ static int json_get_next_token() {
         token_value[token_value_length] = '\0';
         return JSON_TOKEN_NUMBER;
     }
-invalid_number:
 
     return JSON_TOKEN_UNKNOWN;
 }
