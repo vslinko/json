@@ -103,14 +103,11 @@ static struct vstd_object_pool* json_object_pool;
 static struct vstd_object_pool* json_object_member_pool;
 static struct vstd_object_pool* json_parse_result_pool;
 
-static void dumb_reset() {}
-
 static struct json_value* json_value_alloc() {
     if (!json_value_pool) {
         json_value_pool = vstd_object_pool_alloc(
             16,
-            sizeof(struct json_value),
-            (vstd_object_pool_reset_fn*) &dumb_reset
+            sizeof(struct json_value)
         );
     }
 
@@ -121,8 +118,7 @@ static struct json_array* json_array_alloc() {
     if (!json_array_pool) {
         json_array_pool = vstd_object_pool_alloc(
             16,
-            sizeof(struct json_array),
-            (vstd_object_pool_reset_fn*) &dumb_reset
+            sizeof(struct json_array)
         );
     }
 
@@ -133,8 +129,7 @@ static struct json_object* json_object_alloc() {
     if (!json_object_pool) {
         json_object_pool = vstd_object_pool_alloc(
             16,
-            sizeof(struct json_object),
-            (vstd_object_pool_reset_fn*) &dumb_reset
+            sizeof(struct json_object)
         );
     }
 
@@ -145,8 +140,7 @@ static struct json_object_member* json_object_member_alloc() {
     if (!json_object_member_pool) {
         json_object_member_pool = vstd_object_pool_alloc(
             16,
-            sizeof(struct json_object_member),
-            (vstd_object_pool_reset_fn*) &dumb_reset
+            sizeof(struct json_object_member)
         );
     }
 
@@ -157,8 +151,7 @@ static struct json_parse_result* json_parse_result_alloc() {
     if (!json_parse_result_pool) {
         json_parse_result_pool = vstd_object_pool_alloc(
             16,
-            sizeof(struct json_parse_result),
-            (vstd_object_pool_reset_fn*) &dumb_reset
+            sizeof(struct json_parse_result)
         );
     }
 
