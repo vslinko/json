@@ -40,57 +40,57 @@ enum json_value_type {
 
 struct json_array {
     unsigned int size;
-    struct json_value** values;
+    struct json_value **values;
 };
 
 struct json_object_member {
-    char* name;
-    struct json_value* value;
+    char *name;
+    struct json_value *value;
 };
 
 struct json_object {
     unsigned int size;
-    struct json_object_member** members;
+    struct json_object_member **members;
 };
 
 struct json_value {
     enum json_value_type type;
 
     union {
-        char* boolean_value;
-        char* number_value;
-        char* string_value;
-        struct json_array* array_value;
-        struct json_object* object_value;
-    };
+        char *boolean;
+        char *number;
+        char *string;
+        struct json_array *array;
+        struct json_object *object;
+    } value;
 };
 
 struct json_parse_result {
     unsigned int error;
     unsigned int error_position;
-    struct json_value* value;
+    struct json_value *value;
 };
 
-char* json_escape_string(const char* string);
+char *json_escape_string(const char *string);
 
-struct json_value* json_null_value(void);
-struct json_value* json_boolean_value(bool value);
-struct json_value* json_string_value(const char* value);
-struct json_value* json_number_value(const char* value);
-struct json_value* json_array_value(void);
-struct json_value* json_object_value(void);
-void json_array_push(struct json_value* array_value, struct json_value* value);
-void json_object_push(struct json_value* object_value, const char* name, struct json_value* value);
-bool json_object_has(struct json_value* object_value, const char* name);
-struct json_value* json_object_get(struct json_value* object_value, const char* name);
+struct json_value *json_null_value(void);
+struct json_value *json_boolean_value(bool value);
+struct json_value *json_string_value(const char *value);
+struct json_value *json_number_value(const char *value);
+struct json_value *json_array_value(void);
+struct json_value *json_object_value(void);
+void json_array_push(struct json_value *array_value, struct json_value *value);
+void json_object_push(struct json_value *object_value, const char *name, struct json_value *value);
+bool json_object_has(struct json_value *object_value, const char *name);
+struct json_value *json_object_get(struct json_value *object_value, const char *name);
 
-struct json_value* json_clone(const struct json_value* source);
+struct json_value *json_clone(const struct json_value *source);
 
-struct json_parse_result* json_parse(const char* json, unsigned int length);
+struct json_parse_result *json_parse(const char *json, unsigned int length);
 
-char* json_stringify(const struct json_value* value);
+char *json_stringify(const struct json_value *value);
 
-void json_value_free(struct json_value* value);
-void json_parse_result_free(struct json_parse_result* parse_result);
+void json_value_free(struct json_value *value);
+void json_parse_result_free(struct json_parse_result *parse_result);
 
 #endif

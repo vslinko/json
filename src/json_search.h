@@ -22,8 +22,8 @@
 #ifndef JSON_SEARCH_H
 #define JSON_SEARCH_H
 
-#include "json.h"
+#include "./json.h"
 
-struct json_value* json_search(struct json_value* root, const char* path);
+struct json_value *json_search(struct json_value *root, const char *path);
 
 #endif

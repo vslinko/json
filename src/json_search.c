@@ -19,22 +19,11 @@
  * THE SOFTWARE.
  */
 
-#include "json_search.h"
-
+#include "./json_search.h"
+#include <assert.h> /* assert */
 #include <stdio.h> /* fprintf */
 #include <stdlib.h> /* atoi, abort */
 #include <string.h> /* size_t, strlen */
-
-/*
- * TABLE OF CONTENTS
- */
-
-static char json_search_get_next_token(void);
-struct json_value* json_search(struct json_value* root, const char* path);
-
-/*
- * JSON SEARCH
- */
 
 #define JSON_SEARCH_TOKEN_EOF 0
 #define JSON_SEARCH_TOKEN_PROPERTY 1
@@ -44,13 +33,16 @@ struct json_value* json_search(struct json_value* root, const char* path);
 #define json_search_is_digit(character) \
     (character >= '0' && character <= '9')
 
-static const char* search_path;
+static const char *search_path;
 static size_t search_path_length;
 static unsigned int current_position;
-static char* property_name;
+static char *property_name;
 static unsigned int array_index;
 
 static char json_search_get_next_token() {
+    int array_index_length, property_name_length;
+    char *array_index_string;
+
     if (current_position >= search_path_length) {
         return JSON_SEARCH_TOKEN_EOF;
     }
@@ -58,7 +50,7 @@ static char json_search_get_next_token() {
     if (search_path[current_position] == '[') {
         current_position++;
 
-        int array_index_length = 0;
+        array_index_length = 0;
 
         while (current_position < search_path_length) {
             if (json_search_is_digit(search_path[current_position])) {
@@ -75,12 +67,11 @@ static char json_search_get_next_token() {
 
         current_position++;
 
-        char* array_index_string = malloc(sizeof(char) * (array_index_length + 1));
-        memcpy(
-            array_index_string,
-            search_path + current_position - array_index_length - 1,
-            array_index_length
-        );
+        array_index_string = malloc(sizeof(char) * (array_index_length + 1));
+        assert(array_index_string);
+        memcpy(array_index_string,
+               search_path + current_position - array_index_length - 1,
+               array_index_length);
         array_index_string[array_index_length] = '\0';
         array_index = atoi(array_index_string);
         free(array_index_string);
@@ -93,7 +84,7 @@ static char json_search_get_next_token() {
             current_position++;
         }
 
-        int property_name_length = 0;
+        property_name_length = 0;
 
         while (current_position < search_path_length) {
             if (search_path[current_position] != '.' && search_path[current_position] != '[') {
@@ -109,11 +100,10 @@ static char json_search_get_next_token() {
         }
 
         property_name = malloc(sizeof(char) * (property_name_length + 1));
-        memcpy(
-            property_name,
-            search_path + current_position - property_name_length,
-            property_name_length
-        );
+        assert(property_name);
+        memcpy(property_name,
+               search_path + current_position - property_name_length,
+               property_name_length);
         property_name[property_name_length] = '\0';
         return JSON_SEARCH_TOKEN_PROPERTY;
     }
@@ -121,13 +111,17 @@ static char json_search_get_next_token() {
     return JSON_SEARCH_TOKEN_UNKNOWN;
 }
 
-struct json_value* json_search(struct json_value* root, const char* path) {
+struct json_value *json_search(struct json_value *root, const char *path) {
+    char token;
+    struct json_value *new_root;
+    unsigned int i;
+
     search_path = path;
     search_path_length = strlen(search_path);
     current_position = 0;
 
     while (true) {
-        char token = json_search_get_next_token();
+        token = json_search_get_next_token();
 
         switch (token) {
             case JSON_SEARCH_TOKEN_EOF:
@@ -139,15 +133,15 @@ struct json_value* json_search(struct json_value* root, const char* path) {
                     return NULL;
                 }
 
-                struct json_value* new_root = NULL;
+                new_root = NULL;
 
-                for (unsigned int i = 0; i < root->object_value->size; i++) {
-                    if (strcmp(root->object_value->members[i]->name, property_name) == 0) {
-                        new_root = root->object_value->members[i]->value;
+                for (i = 0; i < root->value.object->size; i++) {
+                    if (strcmp(root->value.object->members[i]->name, property_name) == 0) {
+                        new_root = root->value.object->members[i]->value;
                     }
                 }
 
-                if (new_root == NULL) {
+                if (!new_root) {
                     free(property_name);
                     return NULL;
                 }
@@ -157,11 +151,11 @@ struct json_value* json_search(struct json_value* root, const char* path) {
                 break;
 
             case JSON_SEARCH_TOKEN_ARRAY:
-                if (root->type != JSON_ARRAY_VALUE || root->array_value->size <= array_index) {
+                if (root->type != JSON_ARRAY_VALUE || root->value.array->size <= array_index) {
                     return NULL;
                 }
 
-                root = root->array_value->values[array_index];
+                root = root->value.array->values[array_index];
                 break;
 
             case JSON_SEARCH_TOKEN_UNKNOWN:

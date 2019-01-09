@@ -28,7 +28,7 @@ target_compile_options(
   json
   PRIVATE -Wall
   PRIVATE -Wextra
-  PRIVATE -std=c11
+  PRIVATE -std=c89
   PRIVATE -pedantic
   PRIVATE -Wmissing-prototypes
   PRIVATE -Wstrict-prototypes
@@ -55,7 +55,7 @@ target_compile_options(
   json-test
   PRIVATE -Wall
   PRIVATE -Wextra
-  PRIVATE -std=c11
+  PRIVATE -std=c89
   PRIVATE -pedantic
   PRIVATE -Wmissing-prototypes
   PRIVATE -Wstrict-prototypes

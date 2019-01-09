@@ -21,10 +21,9 @@
 
 #include <string.h>
 #include <vstd/test.h>
+#include "./json_search.h"
 
-#include "json_search.h"
-
-#define assert_successfull_search(source, path, result) \
+#define ASSERT_SUCCESSFULL_SEARCH(source, path, result) \
     parse_result = json_parse(source, strlen(source)); \
     tassert(parse_result); \
     tassert(parse_result->error == 0); \
@@ -36,61 +35,61 @@
     json_value_free(parse_result->value); \
     json_parse_result_free(parse_result);
 
-#define assert_empty_search(source, path) \
+#define ASSERT_EMPTY_SEARCH(source, path) \
     parse_result = json_parse(source, strlen(source)); \
     tassert(parse_result); \
     tassert(parse_result->error == 0); \
     found = json_search(parse_result->value, path); \
-    tassert(found == NULL); \
+    tassert(!found); \
     json_value_free(parse_result->value); \
     json_parse_result_free(parse_result);
 
-#define assert_failed_search(source, path) \
+#define ASSERT_FAILED_SEARCH(source, path) \
     parse_result = json_parse(source, strlen(source)); \
     tassert(parse_result); \
     tassert(parse_result->error == 0); \
     json_search(parse_result->value, path);
 
-static char* source = "{\"a\":1,\"b\":[2,{\"c\":[1,2,3]}]}";
-static struct json_parse_result* parse_result;
-static struct json_value* found;
-static char* stringified;
+static char *source = "{\"a\":1,\"b\":[2,{\"c\":[1,2,3]}]}";
+static struct json_parse_result *parse_result;
+static struct json_value *found;
+static char *stringified;
 
 static void test_json_search_successfull() {
-    assert_successfull_search(source, "a", "1");
-    assert_successfull_search(source, "b", "[2,{\"c\":[1,2,3]}]");
-    assert_successfull_search(source, "b[0]", "2");
-    assert_successfull_search(source, "b[1]", "{\"c\":[1,2,3]}");
-    assert_successfull_search(source, "b[1].c", "[1,2,3]");
-    assert_successfull_search(source, "b[1].c[0]", "1");
-    assert_successfull_search(source, "b[1].c[1]", "2");
-    assert_successfull_search(source, "b[1].c[2]", "3");
+    ASSERT_SUCCESSFULL_SEARCH(source, "a", "1")
+    ASSERT_SUCCESSFULL_SEARCH(source, "b", "[2,{\"c\":[1,2,3]}]")
+    ASSERT_SUCCESSFULL_SEARCH(source, "b[0]", "2")
+    ASSERT_SUCCESSFULL_SEARCH(source, "b[1]", "{\"c\":[1,2,3]}")
+    ASSERT_SUCCESSFULL_SEARCH(source, "b[1].c", "[1,2,3]")
+    ASSERT_SUCCESSFULL_SEARCH(source, "b[1].c[0]", "1")
+    ASSERT_SUCCESSFULL_SEARCH(source, "b[1].c[1]", "2")
+    ASSERT_SUCCESSFULL_SEARCH(source, "b[1].c[2]", "3")
 }
 VSTD_TEST_REGISTER_UNIT(test_json_search_successfull, 10000, NULL, NULL)
 
 static void test_json_search_empty() {
-    assert_empty_search(source, "c");
-    assert_empty_search(source, "b[2]");
-    assert_empty_search(source, "b[1].c[3]");
+    ASSERT_EMPTY_SEARCH(source, "c")
+    ASSERT_EMPTY_SEARCH(source, "b[2]")
+    ASSERT_EMPTY_SEARCH(source, "b[1].c[3]")
 }
 VSTD_TEST_REGISTER_UNIT(test_json_search_empty, 10000, NULL, NULL)
 
 static void test_json_search_abort_unclosed_array() {
-    assert_failed_search(source, "[");
+    ASSERT_FAILED_SEARCH(source, "[")
 }
 VSTD_TEST_REGISTER_ABORT(test_json_search_abort_unclosed_array, NULL, NULL)
 
 static void test_json_search_abort_empty_array_index() {
-    assert_failed_search(source, "[]");
+    ASSERT_FAILED_SEARCH(source, "[]")
 }
 VSTD_TEST_REGISTER_ABORT(test_json_search_abort_empty_array_index, NULL, NULL)
 
 static void test_json_search_abort_empty_property_name() {
-    assert_failed_search(source, "a.");
+    ASSERT_FAILED_SEARCH(source, "a.")
 }
 VSTD_TEST_REGISTER_ABORT(test_json_search_abort_empty_property_name, NULL, NULL)
 
 static void test_json_search_abort_starts_with_dot() {
-    assert_failed_search(source, ".a");
+    ASSERT_FAILED_SEARCH(source, ".a")
 }
 VSTD_TEST_REGISTER_ABORT(test_json_search_abort_starts_with_dot, NULL, NULL)

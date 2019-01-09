@@ -5,9 +5,10 @@ AlignEscapedNewlines: DontAlign
 AlignTrailingComments: false
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeTernaryOperators: true
-ColumnLimit: 100
+ColumnLimit: 0
 Cpp11BracedListStyle: false
-IncludeBlocks: Regroup
+IncludeBlocks: Merge
 IndentWidth: 4
+PointerAlignment: Right
 SpaceAfterCStyleCast: true
 SpacesBeforeTrailingComments: 1

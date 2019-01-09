@@ -23,40 +23,44 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "json.h"
-#include "json_search.h"
+#include "./json.h"
+#include "./json_search.h"
 
 #define SOURCE_CHUNK_SIZE 512
 
-const char* error_messages[] = {
+static const char *error_messages[] = {
     "JSON_ERROR_EMPTY_FILE",
     "JSON_ERROR_UNEXPECTED_TOKEN"
 };
 
-unsigned int read_file(const char* path, char** _source);
-unsigned int read_file(const char* path, char** _source) {
-    FILE* handle = fopen(path, "r");
+static unsigned int read_file(const char *path, char **_source) {
+    FILE *handle;
+    char *source;
+    unsigned int length;
+    char character;
 
-    if (handle == NULL) {
+    handle = fopen(path, "r");
+
+    if (!handle) {
         return -1;
     }
-    
-    char* source = malloc(sizeof(char) * SOURCE_CHUNK_SIZE + 1);
+
+    source = malloc(sizeof(char) * SOURCE_CHUNK_SIZE + 1);
     assert(source);
 
-    unsigned int length = 0;
+    length = 0;
 
     source[length] = '\0';
 
     while (true) {
-        char character = getc(handle);
+        character = getc(handle);
 
         if (character == EOF) {
             break;
         }
 
         if (length > 0 && length % SOURCE_CHUNK_SIZE == 0) {
+            /* cppcheck-suppress memleakOnRealloc */
             source = realloc(source, sizeof(char) * (length + SOURCE_CHUNK_SIZE + 1));
             assert(source);
         }
@@ -72,43 +76,46 @@ unsigned int read_file(const char* path, char** _source) {
     return length;
 }
 
-struct json_value* parse_file(const char* path);
-struct json_value* parse_file(const char* path) {
-    char* source = NULL;
-    unsigned int length = read_file(path, &source);
+static struct json_value *parse_file(const char *path) {
+    char *source;
+    unsigned int length;
+    struct json_parse_result *result;
+    struct json_value *value;
+
+    length = read_file(path, &source);
 
     if (length < 0) {
         fprintf(stderr, "Unable to read file \"%s\"\n", path);
         exit(2);
     }
 
-    struct json_parse_result* result = json_parse(source, length);
+    result = json_parse(source, length);
 
     if (result->error > 0) {
-        fprintf(
-            stderr,
-            "ERROR #%d: %s at position %d at file %s\n",
-            result->error,
-            error_messages[result->error - 1],
-            result->error_position,
-            path
-        );
+        fprintf(stderr,
+                "ERROR #%d: %s at position %d at file %s\n",
+                result->error,
+                error_messages[result->error - 1],
+                result->error_position,
+                path);
         exit(1);
     }
 
-    struct json_value* value = result->value;
+    value = result->value;
     json_parse_result_free(result);
 
     return value;
 }
 
-int main(int argc, const char** argv) {
+int main(int argc, const char **argv) {
+    struct json_value *json_value;
+
     if (argc < 2) {
         fprintf(stderr, "usage: json <json_file> [search_path]\n");
         return 2;
     }
 
-    struct json_value* json_value = parse_file(argv[1]);
+    json_value = parse_file(argv[1]);
 
     if (argc >= 3) {
         json_value = json_search(json_value, argv[2]);

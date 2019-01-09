@@ -21,7 +21,7 @@
 
 #include <vstd/test.h>
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     vstd_test_runner(argc, argv);
     return 0;
 }
